@@ -77,6 +77,9 @@
 .sidebar-item {
     -fx-background-color: transparent;
     -fx-padding: 8 16 8 20;
+    -fx-min-height: 32;
+    -fx-pref-height: 32;
+    -fx-max-height: 32;
     -fx-cursor: hand;
     -fx-text-fill: #858585;
 }
@@ -139,13 +142,24 @@
     -fx-alignment: center;
 }
 
+/* Section labels keep the same vertical footprint in both sidebar states. */
+.sidebar-section-label {
+    -fx-padding: 12 16 4 16;
+}
+
 .sidebar-collapsed .sidebar-label {
     -fx-padding: 16 0 8 0;
     -fx-alignment: center;
 }
 
+.sidebar-collapsed .sidebar-section-label {
+    -fx-padding: 12 0 4 0;
+    -fx-alignment: center;
+}
+
 .sidebar-collapsed .logo-text {
-    -fx-padding: 0;
+    /* Preserve the expanded logo's vertical footprint so the menu does not jump. */
+    -fx-padding: 16 0 8 0;
     -fx-alignment: center;
 }
 
@@ -463,6 +477,15 @@
 
 .button-accent:hover {
     -fx-background-color: #7BB8FF;
+}
+
+/* Keep the sidebar toggle transparent instead of inheriting generic button chrome. */
+.sidebar .sidebar-toggle,
+.sidebar .sidebar-toggle:hover,
+.sidebar .sidebar-toggle:pressed,
+.sidebar .sidebar-toggle:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 /* === SEARCH FIELD === */

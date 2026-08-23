@@ -60,6 +60,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -323,12 +324,8 @@ public class ApplicationBootstrap {
         logo.getStyleClass().add("logo-text");
         logo.setMaxWidth(Double.MAX_VALUE);
 
-        Label version = new Label("STUDIO v1.0");
-        version.getStyleClass().add("sidebar-label");
-        version.setPadding(new Insets(0, 16, 16, 16));
-
         Label sep1 = new Label("NAVIGATION");
-        sep1.getStyleClass().add("sidebar-label");
+        sep1.getStyleClass().addAll("sidebar-label", "sidebar-section-label");
         sep1.setPadding(new Insets(12, 16, 4, 16));
 
         Label dashItem = createSidebarItem("\u25A3 Dashboard");
@@ -343,7 +340,7 @@ public class ApplicationBootstrap {
         allItems.addAll(List.of(dashItem, memItem, sessItem, projItem, timelineItem, promptItem, conflictsItem));
 
         Label sep2 = new Label("SYSTEM");
-        sep2.getStyleClass().add("sidebar-label");
+        sep2.getStyleClass().addAll("sidebar-label", "sidebar-section-label");
         sep2.setPadding(new Insets(12, 16, 4, 16));
 
         Label diagItem = createSidebarItem("\u2699 Diagnostics");
@@ -358,7 +355,7 @@ public class ApplicationBootstrap {
         connStatus.setPadding(new Insets(16, 16, 8, 16));
         connectionViewModel.stateProperty().addListener((obs, old, val) -> {
             String prefix = val == ConnectionState.CONNECTED ? "●" : "○";
-            connStatus.setText(sidebarCollapsed[0] ? prefix : prefix + " Engram");
+            connStatus.setText(sidebarCollapsed[0] ? "Engram" : prefix + " Engram");
             connStatus.getStyleClass().removeAll("status-connected", "status-disconnected");
             connStatus.getStyleClass().add(val == ConnectionState.CONNECTED ? "status-connected" : "status-disconnected");
         });
@@ -391,22 +388,26 @@ public class ApplicationBootstrap {
             sidebar.setMaxWidth(collapsed ? 52 : 184);
             sidebar.getStyleClass().removeAll("sidebar-collapsed");
             if (collapsed) sidebar.getStyleClass().add("sidebar-collapsed");
-            logo.setText(collapsed ? "◈" : "◈ ENGRAM");
+            logo.setText(collapsed ? "E-S" : "◈ ENGRAM");
             logo.setAlignment(collapsed ? Pos.CENTER : Pos.CENTER_LEFT);
-            version.setVisible(!collapsed);
-            version.setManaged(!collapsed);
-            sep1.setVisible(!collapsed);
-            sep1.setManaged(!collapsed);
-            sep2.setVisible(!collapsed);
-            sep2.setManaged(!collapsed);
+            sep1.setText(collapsed ? "NAV" : "NAVIGATION");
+            sep2.setText(collapsed ? "SYS" : "SYSTEM");
+            Insets sectionPadding = collapsed
+                ? new Insets(12, 0, 4, 0)
+                : new Insets(12, 16, 4, 16);
+            sep1.setPadding(sectionPadding);
+            sep2.setPadding(sectionPadding);
             for (Label item : allItems) {
                 item.setText(collapsed
                     ? (String) item.getProperties().get("collapsedText")
                     : (String) item.getProperties().get("expandedText"));
                 item.setAlignment(collapsed ? Pos.CENTER : Pos.CENTER_LEFT);
+                item.setTooltip(collapsed
+                    ? (Tooltip) item.getProperties().get("collapsedTooltip")
+                    : null);
             }
             connStatus.setText(collapsed
-                ? (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "●" : "○")
+                ? "Engram"
                 : (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "● Engram" : "○ Engram"));
         };
         collapseButton.setOnAction(event -> setCollapsed.accept(!sidebarCollapsed[0]));
@@ -425,7 +426,7 @@ public class ApplicationBootstrap {
         settingsItem.setOnMouseClicked(e -> { select(settingsItem, allItems); switchView.accept(createSettingsView()); });
 
         sidebar.getChildren().addAll(
-                logoHeader, version,
+                logoHeader,
                 sep1,
                 dashItem, memItem, sessItem, projItem, timelineItem, promptItem, conflictsItem,
                 sep2,
@@ -914,11 +915,16 @@ public class ApplicationBootstrap {
     private Label createSidebarItem(String text) {
         String expandedText = "  " + text;
         String collapsedText = text.substring(0, 1);
+        String trimmedText = text.trim();
+        int titleStart = trimmedText.indexOf(' ');
+        String title = titleStart >= 0 ? trimmedText.substring(titleStart + 1).trim() : trimmedText;
         Label label = new Label(expandedText);
         label.getStyleClass().add("sidebar-item");
         label.setMaxWidth(Double.MAX_VALUE);
         label.getProperties().put("expandedText", expandedText);
         label.getProperties().put("collapsedText", collapsedText);
+        label.getProperties().put("collapsedTooltip", new Tooltip(title));
+        label.setAccessibleText(title);
         return label;
     }
 
