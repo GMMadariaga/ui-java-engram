@@ -63,7 +63,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -365,8 +365,15 @@ public class ApplicationBootstrap {
         String initialPrefix = connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "●" : "○";
         connStatus.setText(initialPrefix + " Engram");
 
-        Polygon collapseIcon = new Polygon(15.0, 4.0, 7.0, 12.0, 15.0, 20.0);
-        collapseIcon.getStyleClass().add("sidebar-toggle-icon");
+        HBox collapseIcon = new HBox(0);
+        collapseIcon.setMinSize(14, 11);
+        collapseIcon.setPrefSize(14, 11);
+        collapseIcon.setMaxSize(14, 11);
+        Rectangle layoutSidebar = new Rectangle(3, 11);
+        layoutSidebar.getStyleClass().add("sidebar-toggle-icon-sidebar");
+        Rectangle layoutFrame = new Rectangle(11, 11);
+        layoutFrame.getStyleClass().add("sidebar-toggle-icon");
+        collapseIcon.getChildren().addAll(layoutSidebar, layoutFrame);
         javafx.scene.control.Button collapseButton = new javafx.scene.control.Button();
         collapseButton.getStyleClass().add("sidebar-toggle");
         collapseButton.setFocusTraversable(false);
@@ -401,11 +408,6 @@ public class ApplicationBootstrap {
             connStatus.setText(collapsed
                 ? (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "●" : "○")
                 : (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "● Engram" : "○ Engram"));
-            if (collapsed) {
-                collapseIcon.getPoints().setAll(9.0, 4.0, 17.0, 12.0, 9.0, 20.0);
-            } else {
-                collapseIcon.getPoints().setAll(15.0, 4.0, 7.0, 12.0, 15.0, 20.0);
-            }
         };
         collapseButton.setOnAction(event -> setCollapsed.accept(!sidebarCollapsed[0]));
 

@@ -111,7 +111,15 @@
 }
 
 .sidebar-toggle-icon {
-    -fx-fill: #C8C8C8;
+    -fx-fill: transparent;
+    -fx-stroke: #687586;
+    -fx-stroke-width: 1;
+}
+
+.sidebar-toggle-icon-sidebar {
+    -fx-fill: transparent;
+    -fx-stroke: #62A7FF;
+    -fx-stroke-width: 1;
 }
 
 .sidebar-toggle:hover {
@@ -119,7 +127,11 @@
 }
 
 .sidebar-toggle:hover .sidebar-toggle-icon {
-    -fx-fill: #62A7FF;
+    -fx-stroke: #A9D0FF;
+}
+
+.sidebar-toggle:hover .sidebar-toggle-icon-sidebar {
+    -fx-fill: #8BC2FF;
 }
 
 .sidebar-collapsed .sidebar-item {
