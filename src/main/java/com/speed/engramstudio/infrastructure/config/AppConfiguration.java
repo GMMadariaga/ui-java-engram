@@ -12,6 +12,7 @@ public class AppConfiguration {
     private static final String CONFIG_FILE = "engram-studio.properties";
     private static final String DEFAULT_URL = "http://127.0.0.1:7437";
     private static final int DEFAULT_TIMEOUT = 5000;
+    private static final boolean DEFAULT_AUTO_START = true;
     
     private final Properties properties;
     private final Path configPath;
@@ -32,6 +33,7 @@ public class AppConfiguration {
         properties.setProperty("engram.url", DEFAULT_URL);
         properties.setProperty("engram.timeout", String.valueOf(DEFAULT_TIMEOUT));
         properties.setProperty("engram.auto-connect", "true");
+        properties.setProperty("engram.auto-start", String.valueOf(DEFAULT_AUTO_START));
         
         // Load from file if exists
         if (Files.exists(configPath)) {
@@ -76,6 +78,14 @@ public class AppConfiguration {
     
     public void setAutoConnect(boolean autoConnect) {
         properties.setProperty("engram.auto-connect", String.valueOf(autoConnect));
+    }
+
+    public boolean isAutoStart() {
+        return Boolean.parseBoolean(properties.getProperty("engram.auto-start", String.valueOf(DEFAULT_AUTO_START)));
+    }
+
+    public void setAutoStart(boolean autoStart) {
+        properties.setProperty("engram.auto-start", String.valueOf(autoStart));
     }
     
     public String getProperty(String key, String defaultValue) {

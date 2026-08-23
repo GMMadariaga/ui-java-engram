@@ -102,6 +102,22 @@
     -fx-background-color: #141414;
 }
 
+/* === SETTINGS === */
+.settings-scroll {
+    -fx-background-color: #141414;
+    -fx-border-color: transparent;
+}
+
+.settings-scroll > .viewport,
+.settings-scroll .corner {
+    -fx-background-color: #141414;
+}
+
+.settings-value {
+    -fx-text-fill: #C8C8C8;
+    -fx-font-size: 12px;
+}
+
 /* === HEADER === */
 .header {
     -fx-background-color: #0A0A0A;

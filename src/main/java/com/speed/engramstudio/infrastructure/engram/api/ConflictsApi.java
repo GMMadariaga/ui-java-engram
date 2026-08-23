@@ -24,7 +24,7 @@ public class ConflictsApi {
     }
 
     public CompletableFuture<List<ConflictDto>> getAll() {
-        return httpClient.get("/conflicts")
+        return httpClient.get("/conflicts?limit=1000")
             .thenApply(response -> {
                 try {
                     JsonNode root = objectMapper.readTree(response);

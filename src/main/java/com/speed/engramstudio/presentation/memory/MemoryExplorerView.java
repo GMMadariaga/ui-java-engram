@@ -4,6 +4,7 @@ import com.speed.engramstudio.domain.model.Observation;
 import com.speed.engramstudio.domain.model.ObservationType;
 import com.speed.engramstudio.infrastructure.markdown.MarkdownRenderer;
 import com.speed.engramstudio.presentation.components.CollapsibleSection;
+import com.speed.engramstudio.presentation.components.DateTimeDisplay;
 import com.speed.engramstudio.presentation.components.DetailWindow;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -160,7 +161,7 @@ public class MemoryExplorerView {
 
         TableColumn<Observation, String> dateCol = new TableColumn<>("CREATED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().createdAt() != null ? p.getValue().createdAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().createdAt())));
         dateCol.setPrefWidth(140);
 
         TableColumn<Observation, String> readCol = new TableColumn<>("STATUS");
@@ -242,7 +243,7 @@ public class MemoryExplorerView {
                 idTag.setText("#" + val.id());
                 typeTag.setText(val.type() != null ? val.type().name() : "");
                 projectTag.setText(val.project() != null ? val.project() : "N/A");
-                dateTag.setText(val.createdAt() != null ? val.createdAt().toString().substring(0, 19) : "N/A");
+                dateTag.setText(DateTimeDisplay.formatOr(val.createdAt(), "N/A"));
             } else {
                 idTag.setText("");
                 typeTag.setText("");

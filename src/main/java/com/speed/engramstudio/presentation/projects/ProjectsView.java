@@ -4,6 +4,7 @@ import com.speed.engramstudio.domain.model.Observation;
 import com.speed.engramstudio.domain.model.Project;
 import com.speed.engramstudio.infrastructure.markdown.MarkdownRenderer;
 import com.speed.engramstudio.presentation.components.DetailWindow;
+import com.speed.engramstudio.presentation.components.DateTimeDisplay;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -164,7 +165,7 @@ public class ProjectsView {
 
         TableColumn<Observation, String> dateCol = new TableColumn<>("CREATED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().createdAt() != null ? p.getValue().createdAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().createdAt())));
         dateCol.setPrefWidth(140);
 
         TableColumn<Observation, Void> openCol = new TableColumn<>("ACTION");

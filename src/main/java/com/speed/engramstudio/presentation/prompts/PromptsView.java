@@ -3,6 +3,7 @@ package com.speed.engramstudio.presentation.prompts;
 import com.speed.engramstudio.domain.model.Prompt;
 import com.speed.engramstudio.infrastructure.markdown.MarkdownRenderer;
 import com.speed.engramstudio.presentation.components.DetailWindow;
+import com.speed.engramstudio.presentation.components.DateTimeDisplay;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -84,7 +85,7 @@ public class PromptsView {
 
         TableColumn<Prompt, String> dateCol = new TableColumn<>("CREATED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().createdAt() != null ? p.getValue().createdAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().createdAt())));
         dateCol.setPrefWidth(140);
 
         TableColumn<Prompt, Void> openCol = new TableColumn<>("ACTION");
@@ -140,7 +141,7 @@ public class PromptsView {
             if (val != null) {
                 promptIdLabel.setText("#" + val.id());
                 projectMeta.setText(val.project() != null ? val.project() : "N/A");
-                dateMeta.setText(val.createdAt() != null ? val.createdAt().toString().substring(0, 19) : "N/A");
+                dateMeta.setText(DateTimeDisplay.formatOr(val.createdAt(), "N/A"));
             } else {
                 promptIdLabel.setText("");
                 projectMeta.setText("");

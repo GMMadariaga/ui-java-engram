@@ -19,7 +19,7 @@ public class SearchApi {
     }
 
     public CompletableFuture<List<ObservationDto>> search(String query) {
-        return httpClient.get("/observations?q=" + encodeQuery(query))
+        return httpClient.get("/observations?q=" + encodeQuery(query) + "&limit=1000")
             .thenApply(response -> {
                 try {
                     return objectMapper.readValue(response, new TypeReference<List<ObservationDto>>() {});

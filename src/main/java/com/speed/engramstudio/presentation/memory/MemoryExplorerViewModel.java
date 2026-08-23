@@ -10,10 +10,14 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class MemoryExplorerViewModel {
+
+    private static final Logger logger = LoggerFactory.getLogger(MemoryExplorerViewModel.class);
 
     private final GetRecentMemories getRecentMemories;
     private final SearchMemories searchMemories;
@@ -33,14 +37,17 @@ public class MemoryExplorerViewModel {
     }
 
     public void loadRecent() {
+        logger.info("Loading observations for Memory Explorer...");
         statusMessage.set("Loading observations...");
         getRecentMemories.execute()
             .thenAccept(list -> Platform.runLater(() -> {
+                logger.info("Memory Explorer received {} observations", list.size());
                 observations.clear();
                 observations.addAll(list);
                 statusMessage.set("Loaded " + list.size() + " observations");
             }))
             .exceptionally(throwable -> {
+                logger.error("Memory Explorer failed to load observations", throwable);
                 Platform.runLater(() -> statusMessage.set("Error: " + throwable.getMessage()));
                 return null;
             });

@@ -33,6 +33,7 @@ import com.speed.engramstudio.infrastructure.engram.api.SearchApi;
 import com.speed.engramstudio.infrastructure.engram.api.SessionsApi;
 import com.speed.engramstudio.infrastructure.engram.api.StatsApi;
 import com.speed.engramstudio.infrastructure.process.EngramProcessManager;
+import com.speed.engramstudio.infrastructure.process.EngramExecutableResolver;
 import com.speed.engramstudio.presentation.conflicts.ConflictsView;
 import com.speed.engramstudio.presentation.conflicts.ConflictsViewModel;
 import com.speed.engramstudio.presentation.connection.ConnectionViewModel;
@@ -88,7 +89,7 @@ public class ApplicationBootstrap {
         AppConfiguration config = new AppConfiguration();
         this.appConfig = config;
         EngramConnectionAdapter connectionAdapter = new EngramConnectionAdapter(config);
-        EngramProcessManager processManager = new EngramProcessManager();
+        EngramProcessManager processManager = new EngramProcessManager(config.getEngramUrl());
 
         StatsApi statsApi = new StatsApi(connectionAdapter.getHttpClient());
         ObservationsApi observationsApi = new ObservationsApi(connectionAdapter.getHttpClient());
@@ -176,10 +177,48 @@ public class ApplicationBootstrap {
         primaryStage.setHeight(screenBounds.getHeight());
         primaryStage.show();
 
-        connectionViewModel.checkConnection();
-        dashboardViewModel.load();
+        initializeEngram(processManager, connectionViewModel, dashboardViewModel);
 
         logger.info("Engram Studio started.");
+    }
+
+    private void initializeEngram(EngramProcessManager processManager,
+                                  ConnectionViewModel connectionViewModel,
+                                  DashboardViewModel dashboardViewModel) {
+        if (!appConfig.isAutoConnect()) {
+            logger.info("Auto-connect disabled; Engram will not be queried on startup.");
+            return;
+        }
+
+        if (!appConfig.isAutoStart() || !isLocalEngramUrl(appConfig.getEngramUrl())) {
+            connectionViewModel.checkConnection();
+            dashboardViewModel.load();
+            return;
+        }
+
+        logger.info("Auto-starting Engram at {}", appConfig.getEngramUrl());
+        processManager.start().whenComplete((result, throwable) ->
+            javafx.application.Platform.runLater(() -> {
+                if (throwable != null) {
+                    logger.error("Auto-start failed", throwable);
+                } else {
+                    logger.info("Auto-start result: {}", result.message());
+                }
+                connectionViewModel.checkConnection();
+                dashboardViewModel.load();
+            }));
+    }
+
+    private boolean isLocalEngramUrl(String url) {
+        try {
+            String host = java.net.URI.create(url).getHost();
+            return "127.0.0.1".equals(host)
+                || "localhost".equalsIgnoreCase(host)
+                || "[::1]".equalsIgnoreCase(host)
+                || "::1".equals(host);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private HBox createTitleBar(Stage stage) {
@@ -358,46 +397,39 @@ public class ApplicationBootstrap {
 
         Label title = new Label("SETTINGS");
         title.getStyleClass().add("header-title");
+        Label subtitle = new Label("Connection, runtime and agent configuration");
+        subtitle.getStyleClass().add("status-text");
 
-        // --- SERVER SECTION ---
-        Label serverSection = new Label("SERVER");
-        serverSection.getStyleClass().add("stat-label");
-
-        Label urlLabel = new Label("Engram Server URL");
-        urlLabel.getStyleClass().add("sidebar-label");
+        // --- SERVER CARD ---
+        VBox serverCard = createSettingsCard("SERVER", "Configure how Studio connects to Engram");
         javafx.scene.control.TextField urlField = new javafx.scene.control.TextField(appConfig.getEngramUrl());
         urlField.getStyleClass().add("search-field");
-        urlField.setMaxWidth(400);
+        HBox.setHgrow(urlField, Priority.ALWAYS);
 
-        Label timeoutLabel = new Label("Connection Timeout (ms)");
-        timeoutLabel.getStyleClass().add("sidebar-label");
         javafx.scene.control.TextField timeoutField = new javafx.scene.control.TextField(String.valueOf(appConfig.getTimeout()));
         timeoutField.getStyleClass().add("search-field");
-        timeoutField.setMaxWidth(200);
+        timeoutField.setPrefWidth(120);
 
-        Label autoLabel = new Label("Auto-connect on startup");
-        autoLabel.getStyleClass().add("sidebar-label");
-        javafx.scene.control.CheckBox autoCheck = new javafx.scene.control.CheckBox();
+        javafx.scene.control.CheckBox autoCheck = new javafx.scene.control.CheckBox("Auto-connect on startup");
         autoCheck.setSelected(appConfig.isAutoConnect());
 
-        // --- ENGRAM BINARY SECTION ---
-        Label binarySection = new Label("ENGRAM BINARY");
-        binarySection.getStyleClass().add("stat-label");
+        javafx.scene.control.CheckBox autoStartCheck = new javafx.scene.control.CheckBox("Start Engram if stopped");
+        autoStartCheck.setSelected(appConfig.isAutoStart());
 
-        Label pathLabel = new Label("Binary path:");
-        pathLabel.getStyleClass().add("sidebar-label");
+        serverCard.getChildren().addAll(
+            settingsField("Engram Server URL", urlField),
+            new HBox(12, settingsField("Timeout (ms)", timeoutField), autoCheck, autoStartCheck)
+        );
+
+        // --- BINARY CARD ---
+        VBox binaryCard = createSettingsCard("ENGRAM BINARY", "Detect, install or update the local executable");
         Label pathValue = new Label(findEngramBinary());
-        pathValue.getStyleClass().add("sidebar-label");
-        pathValue.setStyle("-fx-text-fill: #C8C8C8;");
-
-        Label versionLabel = new Label("Version:");
-        versionLabel.getStyleClass().add("sidebar-label");
-        Label versionValue = new Label("Checking...");
-        versionValue.getStyleClass().add("sidebar-label");
-        versionValue.setStyle("-fx-text-fill: #C8C8C8;");
+        pathValue.getStyleClass().add("settings-value");
+        pathValue.setWrapText(true);
+        Label versionValue = new Label("Not checked");
+        versionValue.getStyleClass().add("settings-value");
 
         javafx.scene.control.Button checkUpdateBtn = new javafx.scene.control.Button("CHECK UPDATE");
-        checkUpdateBtn.getStyleClass().addAll("button");
         checkUpdateBtn.setOnAction(e -> {
             checkUpdateBtn.setDisable(true);
             checkUpdateBtn.setText("CHECKING...");
@@ -405,110 +437,155 @@ public class ApplicationBootstrap {
         });
 
         javafx.scene.control.Button installBtn = new javafx.scene.control.Button("INSTALL / UPDATE");
-        installBtn.getStyleClass().addAll("button");
         installBtn.setOnAction(e -> {
             installBtn.setDisable(true);
             installBtn.setText("INSTALLING...");
             installEngram(installBtn, versionValue);
         });
 
-        Label installHint = new Label("Uses: go install github.com/Gentleman-Programming/engram/cmd/engram@latest");
-        installHint.getStyleClass().add("sidebar-label");
-        installHint.setWrapText(true);
-
-        // --- AGENT PROFILES SECTION ---
-        Label agentSection = new Label("AGENT PROFILES");
-        agentSection.getStyleClass().add("stat-label");
-
-        Label agentHint = new Label("Run 'engram setup <agent>' to configure per agent:");
-        agentHint.getStyleClass().add("sidebar-label");
-        agentHint.setWrapText(true);
-
-        Label agentCommands = new Label("  engram setup opencode\n  engram setup codex\n  engram setup gemini-cli\n  engram setup cursor\n  engram setup vscode-copilot");
-        agentCommands.getStyleClass().add("sidebar-label");
-        agentCommands.setStyle("-fx-text-fill: #858585;");
-
-        javafx.scene.control.ListView<String> profileList = new javafx.scene.control.ListView<>();
-        profileList.getStyleClass().add("table-view");
-        profileList.setPrefHeight(100);
-        profileList.getItems().addAll(
-            "opencode (port 7437)",
-            "codex (port 7438)",
-            "gemini-cli (port 7439)",
-            "cursor (port 7440)",
-            "vscode-copilot (port 7441)"
+        binaryCard.getChildren().addAll(
+            settingsValueRow("Binary path", pathValue),
+            settingsValueRow("Version", versionValue),
+            new HBox(8, checkUpdateBtn, installBtn)
         );
+
+        // --- AGENT CARD ---
+        VBox agentCard = createSettingsCard("AGENT PROFILES", "Apply Engram setup to the selected integration");
+        javafx.scene.control.ComboBox<String> profileList = new javafx.scene.control.ComboBox<>();
+        profileList.getStyleClass().add("search-field");
+        profileList.setMaxWidth(Double.MAX_VALUE);
+        profileList.getItems().addAll("opencode", "codex", "gemini-cli", "cursor", "vscode-copilot");
         profileList.getSelectionModel().selectFirst();
+        HBox.setHgrow(profileList, Priority.ALWAYS);
 
-        javafx.scene.control.Button setupBtn = new javafx.scene.control.Button("engram setup");
-        setupBtn.getStyleClass().addAll("button");
-        setupBtn.setOnAction(e -> {
-            try {
-                ProcessBuilder pb = new ProcessBuilder("engram", "setup");
-                pb.redirectErrorStream(true);
-                pb.start();
-            } catch (Exception ex) {
-                logger.error("Failed to run engram setup", ex);
-            }
-        });
+        Label setupStatus = new Label("Select a profile and run its setup command.");
+        setupStatus.getStyleClass().add("status-text");
+        setupStatus.setWrapText(true);
 
-        // --- SAVE ---
-        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("SAVE");
-        saveBtn.getStyleClass().addAll("button", "button-accent");
+        javafx.scene.control.Button setupBtn = new javafx.scene.control.Button("RUN SETUP");
+        setupBtn.setOnAction(e -> runAgentSetup(profileList.getValue(), setupBtn, setupStatus));
+        agentCard.getChildren().addAll(new HBox(10, profileList, setupBtn), setupStatus);
+
+        // Two columns keep the page compact while the full-width profile card gets priority.
+        GridPane cards = new GridPane();
+        cards.setHgap(16);
+        cards.setVgap(16);
+        ColumnConstraints left = new ColumnConstraints();
+        left.setPercentWidth(50);
+        left.setHgrow(Priority.ALWAYS);
+        ColumnConstraints right = new ColumnConstraints();
+        right.setPercentWidth(50);
+        right.setHgrow(Priority.ALWAYS);
+        cards.getColumnConstraints().addAll(left, right);
+        cards.add(serverCard, 0, 0);
+        cards.add(binaryCard, 1, 0);
+        cards.add(agentCard, 0, 1, 2, 1);
+
+        // --- FOOTER ---
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("SAVE CHANGES");
+        saveBtn.getStyleClass().add("button-accent");
         saveBtn.setOnAction(e -> {
             appConfig.setEngramUrl(urlField.getText().trim());
             try { appConfig.setTimeout(Integer.parseInt(timeoutField.getText().trim())); } catch (NumberFormatException ignored) {}
             appConfig.setAutoConnect(autoCheck.isSelected());
+            appConfig.setAutoStart(autoStartCheck.isSelected());
             appConfig.save();
             saveBtn.setText("SAVED");
-            saveBtn.setStyle("-fx-background-color: #5FBF7F;");
             javafx.application.Platform.runLater(() -> {
-                try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-                javafx.application.Platform.runLater(() -> {
-                    saveBtn.setText("SAVE");
-                    saveBtn.setStyle("");
-                });
+                try { Thread.sleep(1200); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+                javafx.application.Platform.runLater(() -> saveBtn.setText("SAVE CHANGES"));
             });
         });
 
-        Label configPath = new Label("Config: " + System.getProperty("user.home") + "\\.engram-studio\\engram-studio.properties");
-        configPath.getStyleClass().add("sidebar-label");
+        Label configPath = new Label("Config file: " + System.getProperty("user.home") + "\\.engram-studio\\engram-studio.properties");
+        configPath.getStyleClass().add("status-text");
+        HBox footer = new HBox(12, saveBtn, configPath);
+        footer.setAlignment(Pos.CENTER_LEFT);
 
-        VBox form = new VBox(6);
-        form.getChildren().addAll(
-            serverSection,
-            urlLabel, urlField,
-            timeoutLabel, timeoutField,
-            autoLabel, autoCheck,
-            new Separator(),
-            binarySection,
-            pathLabel, pathValue,
-            versionLabel, versionValue,
-            new HBox(8, checkUpdateBtn, installBtn),
-            installHint,
-            new Separator(),
-            agentSection,
-            agentHint, agentCommands,
-            profileList, setupBtn,
-            new Separator(),
-            saveBtn, configPath
-        );
+        settings.getChildren().addAll(title, subtitle, cards, footer);
+        VBox.setVgrow(cards, Priority.ALWAYS);
 
-        settings.getChildren().addAll(title, form);
-        return settings;
+        javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane(settings);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.getStyleClass().add("settings-scroll");
+        return scroll;
+    }
+
+    private VBox createSettingsCard(String titleText, String description) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("stat-card");
+        card.setMaxWidth(Double.MAX_VALUE);
+        Label title = new Label(titleText);
+        title.getStyleClass().add("stat-label");
+        Label hint = new Label(description);
+        hint.getStyleClass().add("status-text");
+        hint.setWrapText(true);
+        card.getChildren().addAll(title, hint, new Separator());
+        return card;
+    }
+
+    private VBox settingsField(String labelText, javafx.scene.Node field) {
+        VBox wrapper = new VBox(4);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("sidebar-label");
+        wrapper.getChildren().addAll(label, field);
+        VBox.setVgrow(field, Priority.NEVER);
+        return wrapper;
+    }
+
+    private HBox settingsValueRow(String labelText, Label value) {
+        Label label = new Label(labelText);
+        label.getStyleClass().add("sidebar-label");
+        HBox row = new HBox(8, label, value);
+        row.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(value, Priority.ALWAYS);
+        return row;
+    }
+
+    private void runAgentSetup(String agent, javafx.scene.control.Button button, Label status) {
+        if (agent == null || agent.isBlank()) return;
+        String executable = EngramExecutableResolver.resolve().orElse(null);
+        if (executable == null) {
+            status.setText("Engram executable not found. Install or update it first.");
+            status.setStyle("-fx-text-fill: #D06B6B;");
+            return;
+        }
+
+        button.setDisable(true);
+        button.setText("RUNNING...");
+        status.setText("Running " + executable + " setup " + agent + "...");
+        status.setStyle("");
+        Thread.startVirtualThread(() -> {
+            try {
+                ProcessBuilder pb = new ProcessBuilder(executable, "setup", agent);
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+                String output;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    output = reader.lines().reduce("", (all, line) -> all.isEmpty() ? line : all + "\\n" + line);
+                }
+                int exitCode = process.waitFor();
+                javafx.application.Platform.runLater(() -> {
+                    button.setDisable(false);
+                    button.setText("RUN SETUP");
+                    status.setText(exitCode == 0 ? "Setup completed for " + agent : "Setup failed (exit " + exitCode + "): " + output);
+                    status.setStyle(exitCode == 0 ? "-fx-text-fill: #5FBF7F;" : "-fx-text-fill: #D06B6B;");
+                });
+            } catch (Exception ex) {
+                logger.error("Failed to run Engram setup for {}", agent, ex);
+                javafx.application.Platform.runLater(() -> {
+                    button.setDisable(false);
+                    button.setText("RUN SETUP");
+                    status.setText("Setup error: " + ex.getMessage());
+                    status.setStyle("-fx-text-fill: #D06B6B;");
+                });
+            }
+        });
     }
 
     private String findEngramBinary() {
-        // Check common locations
-        String[] paths = {
-            "C:\\Users\\gmadariaga\\go\\bin\\engram.exe",
-            System.getProperty("user.home") + "\\go\\bin\\engram.exe",
-            "engram.exe"
-        };
-        for (String p : paths) {
-            if (new java.io.File(p).exists()) return p;
-        }
-        return "engram.exe (not found in PATH)";
+        return EngramExecutableResolver.resolve().orElse("Not found in PATH or Go bin");
     }
 
     private void checkGitHubVersion(Label versionValue, javafx.scene.control.Button btn) {

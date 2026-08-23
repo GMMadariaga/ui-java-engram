@@ -16,7 +16,7 @@ JavaFX desktop client for visualizing and administering Engram memory through it
 
 - Java 25
 - Maven 3.9.x
-- Engram running at `http://127.0.0.1:7437`
+- Engram available at `http://127.0.0.1:7437`; Studio can auto-start the local executable when enabled in Settings
 
 The application does not access Engram's SQLite database directly. All data is read through the Engram HTTP API.
 

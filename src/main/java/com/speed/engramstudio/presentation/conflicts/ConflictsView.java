@@ -3,6 +3,7 @@ package com.speed.engramstudio.presentation.conflicts;
 import com.speed.engramstudio.domain.model.Conflict;
 import com.speed.engramstudio.infrastructure.markdown.MarkdownRenderer;
 import com.speed.engramstudio.presentation.components.DetailWindow;
+import com.speed.engramstudio.presentation.components.DateTimeDisplay;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -114,7 +115,7 @@ public class ConflictsView {
 
         TableColumn<Conflict, String> dateCol = new TableColumn<>("UPDATED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().updatedAt() != null ? p.getValue().updatedAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().updatedAt())));
         dateCol.setPrefWidth(140);
 
         TableColumn<Conflict, Void> openCol = new TableColumn<>("ACTION");
@@ -207,8 +208,8 @@ public class ConflictsView {
             if (val != null) {
                 sourceContent.setText(val.sourceTitle() != null ? val.sourceTitle() : val.sourceId());
                 targetContent.setText(val.targetTitle() != null ? val.targetTitle() : val.targetId());
-                String created = val.createdAt() != null ? val.createdAt().toString().substring(0, 19) : "N/A";
-                String updated = val.updatedAt() != null ? val.updatedAt().toString().substring(0, 19) : "N/A";
+                String created = DateTimeDisplay.formatOr(val.createdAt(), "N/A");
+                String updated = DateTimeDisplay.formatOr(val.updatedAt(), "N/A");
                 dateContent.setText("Created: " + created + "\nUpdated: " + updated);
             } else {
                 sourceContent.setText("Select a relation to view details");
@@ -230,8 +231,8 @@ public class ConflictsView {
             "**Status:** " + conflict.judgmentStatus().name() + "\n\n" +
             "**Source:** " + conflict.sourceTitle() + "\n\n" +
             "**Target:** " + conflict.targetTitle() + "\n\n" +
-            "**Created:** " + (conflict.createdAt() != null ? conflict.createdAt().toString().substring(0, 19) : "N/A") + "\n\n" +
-            "**Updated:** " + (conflict.updatedAt() != null ? conflict.updatedAt().toString().substring(0, 19) : "N/A")
+            "**Created:** " + DateTimeDisplay.formatOr(conflict.createdAt(), "N/A") + "\n\n" +
+            "**Updated:** " + DateTimeDisplay.formatOr(conflict.updatedAt(), "N/A")
         );
         content.setPadding(new Insets(12));
         content.setStyle("-fx-background-color: #1E1E1E;");

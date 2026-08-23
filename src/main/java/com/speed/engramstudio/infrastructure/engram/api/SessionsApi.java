@@ -20,7 +20,7 @@ public class SessionsApi {
     }
 
     public CompletableFuture<List<SessionDto>> getRecent() {
-        return httpClient.get("/sessions/recent")
+        return httpClient.get("/sessions/recent?limit=1000")
             .thenApply(response -> {
                 try {
                     return objectMapper.readValue(response, new TypeReference<List<SessionDto>>() {});

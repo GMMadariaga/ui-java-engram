@@ -107,7 +107,7 @@ public class ProcessManagerView {
         buttons.getChildren().addAll(startBtn, stopBtn, restartBtn);
 
         // Info text
-        Label infoText = new Label("Engram binary: engram.exe (must be in PATH)");
+        Label infoText = new Label("Engram binary: resolved from PATH, GOBIN or the user Go bin directory");
         infoText.getStyleClass().add("sidebar-label");
 
         Region spacer = new Region();

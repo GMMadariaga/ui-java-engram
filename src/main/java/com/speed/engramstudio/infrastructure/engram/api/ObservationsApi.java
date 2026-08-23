@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class ObservationsApi {
 
+    private static final int MENU_LIMIT = 1000;
+
     private final EngramHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
@@ -19,7 +21,7 @@ public class ObservationsApi {
     }
 
     public CompletableFuture<List<ObservationDto>> getAll() {
-        return httpClient.get("/observations")
+        return httpClient.get("/observations?limit=" + MENU_LIMIT)
             .thenApply(response -> {
                 try {
                     return objectMapper.readValue(response, new TypeReference<List<ObservationDto>>() {});
@@ -31,7 +33,7 @@ public class ObservationsApi {
     }
 
     public CompletableFuture<List<ObservationDto>> getRecent() {
-        return httpClient.get("/observations/recent")
+        return httpClient.get("/observations/recent?limit=" + MENU_LIMIT)
             .thenApply(response -> {
                 try {
                     return objectMapper.readValue(response, new TypeReference<List<ObservationDto>>() {});

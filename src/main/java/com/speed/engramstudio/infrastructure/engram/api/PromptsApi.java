@@ -19,7 +19,7 @@ public class PromptsApi {
     }
 
     public CompletableFuture<List<PromptDto>> getRecent() {
-        return httpClient.get("/prompts/recent")
+        return httpClient.get("/prompts/recent?limit=1000")
             .thenApply(response -> {
                 try {
                     return objectMapper.readValue(response, new TypeReference<List<PromptDto>>() {});

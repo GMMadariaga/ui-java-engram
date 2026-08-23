@@ -17,11 +17,21 @@ import java.util.concurrent.CompletableFuture;
 public class EngramProcessManager {
 
     private static final Logger logger = LoggerFactory.getLogger(EngramProcessManager.class);
-    private static final String HEALTH_URL = "http://127.0.0.1:7437/health";
-    private static final String ENGRAM_EXE = "engram.exe";
-
+    private static final String DEFAULT_ENGRAM_URL = "http://127.0.0.1:7437";
+    private static final int DEFAULT_PORT = 7437;
+    private final URI baseUri;
+    private final String healthUrl;
     private volatile Process engramProcess;
     private volatile boolean running = false;
+
+    public EngramProcessManager() {
+        this(DEFAULT_ENGRAM_URL);
+    }
+
+    public EngramProcessManager(String engramUrl) {
+        this.baseUri = URI.create(engramUrl);
+        this.healthUrl = baseUri.resolve("/health").toString();
+    }
 
     public CompletableFuture<ProcessStatus> detect() {
         return CompletableFuture.supplyAsync(() -> {
@@ -50,7 +60,9 @@ public class EngramProcessManager {
                     return new ProcessResult(false, "Engram is already running");
                 }
 
-                ProcessBuilder pb = new ProcessBuilder(ENGRAM_EXE);
+                String executable = EngramExecutableResolver.resolve().orElseThrow(
+                    () -> new IllegalStateException("Engram executable not found in PATH or Go bin"));
+                ProcessBuilder pb = new ProcessBuilder(executable, "serve", String.valueOf(getPort()));
                 pb.redirectErrorStream(true);
                 engramProcess = pb.start();
                 running = true;
@@ -118,17 +130,15 @@ public class EngramProcessManager {
     }
 
     public boolean isRunning() {
-        if (running) {
-            return checkHealth();
-        }
-        return false;
+        running = checkHealth();
+        return running;
     }
 
     private boolean checkHealth() {
         try {
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(HEALTH_URL))
+                .uri(URI.create(healthUrl))
                 .timeout(Duration.ofSeconds(2))
                 .GET()
                 .build();
@@ -137,6 +147,11 @@ public class EngramProcessManager {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private int getPort() {
+        int port = baseUri.getPort();
+        return port > 0 ? port : DEFAULT_PORT;
     }
 
     private boolean waitForHealth(long timeoutMs) {

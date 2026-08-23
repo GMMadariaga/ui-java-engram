@@ -4,6 +4,7 @@ import com.speed.engramstudio.domain.model.Observation;
 import com.speed.engramstudio.domain.model.Session;
 import com.speed.engramstudio.infrastructure.markdown.MarkdownRenderer;
 import com.speed.engramstudio.presentation.components.DetailWindow;
+import com.speed.engramstudio.presentation.components.DateTimeDisplay;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -81,7 +82,7 @@ public class SessionTimelineView {
 
         TableColumn<Session, String> dateCol = new TableColumn<>("STARTED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().startedAt() != null ? p.getValue().startedAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().startedAt())));
         dateCol.setPrefWidth(150);
 
         TableColumn<Session, Integer> countCol = new TableColumn<>("OBS");
@@ -140,7 +141,7 @@ public class SessionTimelineView {
         viewModel.selectedSessionProperty().addListener((obs, old, val) -> {
             if (val != null) {
                 projMeta.setText(val.project() != null ? val.project() : "N/A");
-                dateMeta.setText(val.startedAt() != null ? val.startedAt().toString().substring(0, 19) : "N/A");
+                dateMeta.setText(DateTimeDisplay.formatOr(val.startedAt(), "N/A"));
                 countMeta.setText("Observations: " + val.observationCount());
             } else {
                 projMeta.setText("");
@@ -173,7 +174,7 @@ public class SessionTimelineView {
 
         TableColumn<Observation, String> dateCol = new TableColumn<>("CREATED");
         dateCol.setCellValueFactory(p -> new javafx.beans.property.SimpleStringProperty(
-            p.getValue().createdAt() != null ? p.getValue().createdAt().toString().substring(0, 19) : ""));
+            DateTimeDisplay.format(p.getValue().createdAt())));
         dateCol.setPrefWidth(140);
 
         TableColumn<Observation, Void> openCol = new TableColumn<>("ACTION");
