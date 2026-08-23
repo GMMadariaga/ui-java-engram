@@ -97,9 +97,141 @@
     -fx-text-fill: #62A7FF;
 }
 
+.sidebar-header {
+    -fx-padding: 8 16 6 16;
+    -fx-alignment: center-left;
+    -fx-spacing: 4;
+}
+
+.sidebar-toggle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.sidebar-toggle-icon {
+    -fx-fill: #C8C8C8;
+}
+
+.sidebar-toggle:hover {
+    -fx-background-color: #1E1E1E;
+}
+
+.sidebar-toggle:hover .sidebar-toggle-icon {
+    -fx-fill: #62A7FF;
+}
+
+.sidebar-collapsed .sidebar-item {
+    -fx-padding: 8 0 8 0;
+    -fx-alignment: center;
+}
+
+.sidebar-collapsed .sidebar-label {
+    -fx-padding: 16 0 8 0;
+    -fx-alignment: center;
+}
+
+.sidebar-collapsed .logo-text {
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.sidebar-collapsed .sidebar-header {
+    -fx-padding: 8 0 6 0;
+    -fx-alignment: center;
+}
+
+.sidebar-collapsed .sidebar-toggle {
+    -fx-alignment: center;
+}
+
 /* === CONTENT AREA === */
 .content-area {
     -fx-background-color: #141414;
+}
+
+/* The embedded PowerShell page intentionally has no header or toolbar. */
+.terminal-view {
+    -fx-background-color: #050505;
+}
+
+.terminal-pane {
+    -fx-background-color: #050505;
+}
+
+.terminal-surface {
+    -fx-background-color: #050505;
+    -fx-control-inner-background: #050505;
+    -fx-text-fill: #E0E0E0;
+    -fx-highlight-fill: #264F78;
+    -fx-highlight-text-fill: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-font-family: "Cascadia Mono", "Consolas", "JetBrains Mono", monospace;
+    -fx-font-size: 14px;
+    -fx-padding: 0;
+}
+
+.terminal-surface .content {
+    -fx-background-color: #050505;
+    -fx-padding: 14;
+}
+
+.agent-tabs-scroll {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0;
+}
+
+.agent-tabs-scroll > .viewport {
+    -fx-background-color: #0A0A0A;
+}
+
+.agent-tabs {
+    -fx-background-color: #0A0A0A;
+    -fx-padding: 4 8 4 8;
+}
+
+.agent-tab {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #858585;
+    -fx-font-size: 12px;
+    -fx-padding: 5 10 5 10;
+    -fx-cursor: hand;
+}
+
+.agent-tab-container {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.agent-tab-close {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #858585;
+    -fx-font-size: 14px;
+    -fx-padding: 4 7 4 0;
+    -fx-cursor: hand;
+}
+
+.agent-tab-close:hover {
+    -fx-background-color: #3A2020;
+    -fx-text-fill: #F14C4C;
+}
+
+.agent-tab:hover {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #C8C8C8;
+}
+
+.agent-tab:selected {
+    -fx-background-color: #62A7FF20;
+    -fx-border-color: #62A7FF;
+    -fx-text-fill: #62A7FF;
 }
 
 /* === SETTINGS === */

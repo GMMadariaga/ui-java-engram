@@ -87,6 +87,19 @@ public class AppConfiguration {
     public void setAutoStart(boolean autoStart) {
         properties.setProperty("engram.auto-start", String.valueOf(autoStart));
     }
+
+    public String getAgentExecutable(String agent) {
+        return properties.getProperty("agent." + agent + ".executable", "");
+    }
+
+    public void setAgentExecutable(String agent, String executable) {
+        String key = "agent." + agent + ".executable";
+        if (executable == null || executable.isBlank()) {
+            properties.remove(key);
+        } else {
+            properties.setProperty(key, executable.trim());
+        }
+    }
     
     public String getProperty(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);

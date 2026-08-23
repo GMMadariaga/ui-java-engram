@@ -34,6 +34,7 @@ import com.speed.engramstudio.infrastructure.engram.api.SessionsApi;
 import com.speed.engramstudio.infrastructure.engram.api.StatsApi;
 import com.speed.engramstudio.infrastructure.process.EngramProcessManager;
 import com.speed.engramstudio.infrastructure.process.EngramExecutableResolver;
+import com.speed.engramstudio.infrastructure.process.AgentExecutableResolver;
 import com.speed.engramstudio.presentation.conflicts.ConflictsView;
 import com.speed.engramstudio.presentation.conflicts.ConflictsViewModel;
 import com.speed.engramstudio.presentation.connection.ConnectionViewModel;
@@ -41,6 +42,7 @@ import com.speed.engramstudio.presentation.dashboard.DashboardView;
 import com.speed.engramstudio.presentation.dashboard.DashboardViewModel;
 import com.speed.engramstudio.presentation.diagnostics.DiagnosticsView;
 import com.speed.engramstudio.presentation.diagnostics.DiagnosticsViewModel;
+import com.speed.engramstudio.presentation.agents.AgentCliView;
 import com.speed.engramstudio.presentation.memory.MemoryExplorerView;
 import com.speed.engramstudio.presentation.memory.MemoryExplorerViewModel;
 import com.speed.engramstudio.presentation.processmanager.ProcessManagerView;
@@ -61,6 +63,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Polygon;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -141,6 +144,7 @@ public class ApplicationBootstrap {
         ConflictsView conflictsView = new ConflictsView(conflictsViewModel);
         DiagnosticsView diagnosticsView = new DiagnosticsView(diagnosticsViewModel);
         ProcessManagerView processManagerView = new ProcessManagerView(processManagerViewModel);
+        AgentCliView agentCliView = new AgentCliView();
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("content-area");
@@ -158,7 +162,8 @@ public class ApplicationBootstrap {
         };
 
         VBox sidebar = createSidebar(switchView, connectionViewModel, dashboardView, memoryExplorerView,
-                sessionTimelineView, projectsView, promptsView, conflictsView, diagnosticsView, processManagerView);
+                sessionTimelineView, projectsView, promptsView, conflictsView, diagnosticsView, processManagerView,
+                agentCliView);
         root.setLeft(sidebar);
 
         root.setCenter(dashboardView.getView());
@@ -175,6 +180,7 @@ public class ApplicationBootstrap {
         primaryStage.setY(screenBounds.getMinY());
         primaryStage.setWidth(screenBounds.getWidth());
         primaryStage.setHeight(screenBounds.getHeight());
+        primaryStage.setOnCloseRequest(event -> agentCliView.close());
         primaryStage.show();
 
         initializeEngram(processManager, connectionViewModel, dashboardViewModel);
@@ -300,18 +306,22 @@ public class ApplicationBootstrap {
                                DashboardView dashboardView, MemoryExplorerView memoryExplorerView,
                                SessionTimelineView sessionTimelineView, ProjectsView projectsView,
                                PromptsView promptsView, ConflictsView conflictsView,
-                               DiagnosticsView diagnosticsView, ProcessManagerView processManagerView) {
+                               DiagnosticsView diagnosticsView, ProcessManagerView processManagerView,
+                               AgentCliView agentCliView) {
 
         VBox sidebar = new VBox(0);
         sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(200);
+        sidebar.setMinWidth(52);
+        sidebar.setPrefWidth(184);
+        sidebar.setMaxWidth(184);
+        boolean[] sidebarCollapsed = {false};
 
         List<Label> allItems = new ArrayList<>();
 
         // Logo
         Label logo = new Label("\u25C8 ENGRAM");
         logo.getStyleClass().add("logo-text");
-        logo.setPadding(new Insets(8, 16, 4, 16));
+        logo.setMaxWidth(Double.MAX_VALUE);
 
         Label version = new Label("STUDIO v1.0");
         version.getStyleClass().add("sidebar-label");
@@ -338,16 +348,68 @@ public class ApplicationBootstrap {
 
         Label diagItem = createSidebarItem("\u2699 Diagnostics");
         Label processItem = createSidebarItem("\u25B6 Process");
+        Label agentCliItem = createSidebarItem("\u25A4 Agents");
         Label settingsItem = createSidebarItem("\u2692 Settings");
 
-        allItems.addAll(List.of(diagItem, processItem, settingsItem));
+        allItems.addAll(List.of(diagItem, processItem, agentCliItem, settingsItem));
+
+        Label connStatus = new Label();
+        connStatus.getStyleClass().add("sidebar-label");
+        connStatus.setPadding(new Insets(16, 16, 8, 16));
+        connectionViewModel.stateProperty().addListener((obs, old, val) -> {
+            String prefix = val == ConnectionState.CONNECTED ? "●" : "○";
+            connStatus.setText(sidebarCollapsed[0] ? prefix : prefix + " Engram");
+            connStatus.getStyleClass().removeAll("status-connected", "status-disconnected");
+            connStatus.getStyleClass().add(val == ConnectionState.CONNECTED ? "status-connected" : "status-disconnected");
+        });
+        String initialPrefix = connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "●" : "○";
+        connStatus.setText(initialPrefix + " Engram");
+
+        Polygon collapseIcon = new Polygon(15.0, 4.0, 7.0, 12.0, 15.0, 20.0);
+        collapseIcon.getStyleClass().add("sidebar-toggle-icon");
+        javafx.scene.control.Button collapseButton = new javafx.scene.control.Button();
+        collapseButton.getStyleClass().add("sidebar-toggle");
+        collapseButton.setFocusTraversable(false);
+        collapseButton.setMinSize(36, 32);
+        collapseButton.setPrefSize(36, 32);
+        collapseButton.setGraphic(collapseIcon);
+        collapseButton.setAccessibleText("Contraer o desplegar menú lateral");
+        VBox logoHeader = new VBox(4);
+        logoHeader.getStyleClass().add("sidebar-header");
+        logoHeader.getChildren().addAll(logo, collapseButton);
+
+        java.util.function.Consumer<Boolean> setCollapsed = collapsed -> {
+            sidebarCollapsed[0] = collapsed;
+            sidebar.setPrefWidth(collapsed ? 52 : 184);
+            sidebar.setMaxWidth(collapsed ? 52 : 184);
+            sidebar.getStyleClass().removeAll("sidebar-collapsed");
+            if (collapsed) sidebar.getStyleClass().add("sidebar-collapsed");
+            logo.setText(collapsed ? "◈" : "◈ ENGRAM");
+            logo.setAlignment(collapsed ? Pos.CENTER : Pos.CENTER_LEFT);
+            version.setVisible(!collapsed);
+            version.setManaged(!collapsed);
+            sep1.setVisible(!collapsed);
+            sep1.setManaged(!collapsed);
+            sep2.setVisible(!collapsed);
+            sep2.setManaged(!collapsed);
+            for (Label item : allItems) {
+                item.setText(collapsed
+                    ? (String) item.getProperties().get("collapsedText")
+                    : (String) item.getProperties().get("expandedText"));
+                item.setAlignment(collapsed ? Pos.CENTER : Pos.CENTER_LEFT);
+            }
+            connStatus.setText(collapsed
+                ? (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "●" : "○")
+                : (connectionViewModel.stateProperty().get() == ConnectionState.CONNECTED ? "● Engram" : "○ Engram"));
+            if (collapsed) {
+                collapseIcon.getPoints().setAll(9.0, 4.0, 17.0, 12.0, 9.0, 20.0);
+            } else {
+                collapseIcon.getPoints().setAll(15.0, 4.0, 7.0, 12.0, 15.0, 20.0);
+            }
+        };
+        collapseButton.setOnAction(event -> setCollapsed.accept(!sidebarCollapsed[0]));
 
         // Navigation: select + switch + auto-load
-        Runnable[] selectItem = new Runnable[1];
-        selectItem[0] = () -> {};
-
-        Runnable select = () -> {};
-
         dashItem.setOnMouseClicked(e -> { select(dashItem, allItems); switchView.accept(dashboardView.getView()); dashboardView.refresh(); });
         memItem.setOnMouseClicked(e -> { select(memItem, allItems); switchView.accept(memoryExplorerView.getView()); memoryExplorerView.refresh(); });
         sessItem.setOnMouseClicked(e -> { select(sessItem, allItems); switchView.accept(sessionTimelineView.getView()); sessionTimelineView.refresh(); });
@@ -357,25 +419,15 @@ public class ApplicationBootstrap {
         conflictsItem.setOnMouseClicked(e -> { select(conflictsItem, allItems); switchView.accept(conflictsView.getView()); conflictsView.refresh(); });
         diagItem.setOnMouseClicked(e -> { select(diagItem, allItems); switchView.accept(diagnosticsView.getView()); diagnosticsView.refresh(); });
         processItem.setOnMouseClicked(e -> { select(processItem, allItems); switchView.accept(processManagerView.getView()); processManagerView.refresh(); });
+        agentCliItem.setOnMouseClicked(e -> { select(agentCliItem, allItems); switchView.accept(agentCliView.getView()); });
         settingsItem.setOnMouseClicked(e -> { select(settingsItem, allItems); switchView.accept(createSettingsView()); });
 
-        // Connection status
-        Label connStatus = new Label();
-        connStatus.getStyleClass().add("sidebar-label");
-        connStatus.setPadding(new Insets(16, 16, 8, 16));
-        connectionViewModel.stateProperty().addListener((obs, old, val) -> {
-            String prefix = val == ConnectionState.CONNECTED ? "[OK]" : "[--]";
-            connStatus.setText(prefix + " Engram");
-            connStatus.getStyleClass().removeAll("status-connected", "status-disconnected");
-            connStatus.getStyleClass().add(val == ConnectionState.CONNECTED ? "status-connected" : "status-disconnected");
-        });
-
         sidebar.getChildren().addAll(
-                logo, version,
+                logoHeader, version,
                 sep1,
                 dashItem, memItem, sessItem, projItem, timelineItem, promptItem, conflictsItem,
                 sep2,
-                diagItem, processItem, settingsItem,
+                diagItem, processItem, agentCliItem, settingsItem,
                 new Spacer(),
                 connStatus
         );
@@ -454,7 +506,7 @@ public class ApplicationBootstrap {
         javafx.scene.control.ComboBox<String> profileList = new javafx.scene.control.ComboBox<>();
         profileList.getStyleClass().add("search-field");
         profileList.setMaxWidth(Double.MAX_VALUE);
-        profileList.getItems().addAll("opencode", "codex", "gemini-cli", "cursor", "vscode-copilot");
+        profileList.getItems().addAll("opencode", "codex", "antigravity", "cursor");
         profileList.getSelectionModel().selectFirst();
         HBox.setHgrow(profileList, Priority.ALWAYS);
 
@@ -465,6 +517,41 @@ public class ApplicationBootstrap {
         javafx.scene.control.Button setupBtn = new javafx.scene.control.Button("RUN SETUP");
         setupBtn.setOnAction(e -> runAgentSetup(profileList.getValue(), setupBtn, setupStatus));
         agentCard.getChildren().addAll(new HBox(10, profileList, setupBtn), setupStatus);
+
+        // --- AGENT EXECUTABLES CARD ---
+        VBox executableCard = createSettingsCard("AGENT EXECUTABLES",
+            "Configure the exact CLI path or search the current PATH. Changes apply immediately to Agent CLI.");
+        java.util.Map<String, javafx.scene.control.TextField> executableFields = new java.util.LinkedHashMap<>();
+        Label executableStatus = new Label("Use FIND to detect PATH installations, or BROWSE to select a .exe/.cmd/.ps1 file.");
+        executableStatus.getStyleClass().add("status-text");
+        executableStatus.setWrapText(true);
+
+        String[][] agentExecutables = {
+            {"claude", "Claude"},
+            {"opencode", "OpenCode"},
+            {"codex", "Codex"},
+            {"agy", "Antigravity"}
+        };
+        for (String[] agent : agentExecutables) {
+            String configured = appConfig.getAgentExecutable(agent[0]);
+            javafx.scene.control.TextField executableField = new javafx.scene.control.TextField(configured);
+            if (configured.isBlank()) {
+                AgentExecutableResolver.findOnPath(agent[0]).ifPresent(executableField::setText);
+            }
+            executableField.getStyleClass().add("search-field");
+            HBox.setHgrow(executableField, Priority.ALWAYS);
+
+            javafx.scene.control.Button findButton = new javafx.scene.control.Button("FIND");
+            findButton.setOnAction(e -> findAgentExecutable(agent[0], executableField, executableStatus));
+            javafx.scene.control.Button browseButton = new javafx.scene.control.Button("BROWSE");
+            browseButton.setOnAction(e -> browseAgentExecutable(agent[0], executableField, executableStatus));
+
+            HBox row = new HBox(8, executableField, findButton, browseButton);
+            row.setAlignment(Pos.CENTER_LEFT);
+            executableCard.getChildren().add(settingsField(agent[1] + " executable", row));
+            executableFields.put(agent[0], executableField);
+        }
+        executableCard.getChildren().add(executableStatus);
 
         // Two columns keep the page compact while the full-width profile card gets priority.
         GridPane cards = new GridPane();
@@ -480,6 +567,7 @@ public class ApplicationBootstrap {
         cards.add(serverCard, 0, 0);
         cards.add(binaryCard, 1, 0);
         cards.add(agentCard, 0, 1, 2, 1);
+        cards.add(executableCard, 0, 2, 2, 1);
 
         // --- FOOTER ---
         javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("SAVE CHANGES");
@@ -489,6 +577,7 @@ public class ApplicationBootstrap {
             try { appConfig.setTimeout(Integer.parseInt(timeoutField.getText().trim())); } catch (NumberFormatException ignored) {}
             appConfig.setAutoConnect(autoCheck.isSelected());
             appConfig.setAutoStart(autoStartCheck.isSelected());
+            executableFields.forEach((agent, field) -> appConfig.setAgentExecutable(agent, field.getText()));
             appConfig.save();
             saveBtn.setText("SAVED");
             javafx.application.Platform.runLater(() -> {
@@ -582,6 +671,34 @@ public class ApplicationBootstrap {
                 });
             }
         });
+    }
+
+    private void findAgentExecutable(String agent,
+                                     javafx.scene.control.TextField field,
+                                     Label status) {
+        AgentExecutableResolver.findOnPath(agent).ifPresentOrElse(path -> {
+            field.setText(path);
+            status.setText("Found " + agent + " at " + path);
+            status.setStyle("-fx-text-fill: #5FBF7F;");
+        }, () -> {
+            status.setText(agent + " was not found on PATH. Use BROWSE or paste its full path.");
+            status.setStyle("-fx-text-fill: #D06B6B;");
+        });
+    }
+
+    private void browseAgentExecutable(String agent,
+                                       javafx.scene.control.TextField field,
+                                       Label status) {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.setTitle("Select " + agent + " executable");
+        chooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter(
+            "CLI files", "*.exe", "*.cmd", "*.bat", "*.ps1", "*.*"));
+        java.io.File selected = chooser.showOpenDialog(field.getScene().getWindow());
+        if (selected != null) {
+            field.setText(selected.getAbsolutePath());
+            status.setText("Selected " + agent + ": " + selected.getAbsolutePath() + ". Press SAVE CHANGES.");
+            status.setStyle("-fx-text-fill: #62A7FF;");
+        }
     }
 
     private String findEngramBinary() {
@@ -793,9 +910,13 @@ public class ApplicationBootstrap {
     }
 
     private Label createSidebarItem(String text) {
-        Label label = new Label("  " + text);
+        String expandedText = "  " + text;
+        String collapsedText = text.substring(0, 1);
+        Label label = new Label(expandedText);
         label.getStyleClass().add("sidebar-item");
         label.setMaxWidth(Double.MAX_VALUE);
+        label.getProperties().put("expandedText", expandedText);
+        label.getProperties().put("collapsedText", collapsedText);
         return label;
     }
 

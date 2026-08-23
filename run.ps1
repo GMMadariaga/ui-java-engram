@@ -8,4 +8,4 @@ $env:PATH = "$env:JAVA_HOME\bin;$env:MAVEN_HOME\bin;$env:PATH"
 cd "C:\NUEVOS-proyectos\E-STUDIO\engram-studio"
 
 Write-Host "Starting Engram Studio..."
-mvn javafx:run
+mvn clean javafx:run

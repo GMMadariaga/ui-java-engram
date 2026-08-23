@@ -23,6 +23,7 @@
         <slf4j.version>2.0.12</slf4j.version>
         <logback.version>1.5.3</logback.version>
         <jackson.version>2.17.0</jackson.version>
+        <pty4j.version>0.13.12</pty4j.version>
     </properties>
 
     <dependencies>
@@ -37,6 +38,11 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
         <!-- Jackson for JSON -->
         <dependency>
@@ -48,6 +54,13 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- Native pseudo-terminal support (ConPTY on Windows, Unix PTY elsewhere) -->
+        <dependency>
+            <groupId>org.jetbrains.pty4j</groupId>
+            <artifactId>pty4j</artifactId>
+            <version>${pty4j.version}</version>
         </dependency>
 
         <!-- Logging -->
@@ -111,6 +124,10 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.speed.engramstudio.Main</mainClass>
+                    <options>
+                        <option>--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED</option>
+                        <option>--add-exports=javafx.web/com.sun.javafx.webkit=ALL-UNNAMED</option>
+                    </options>
                 </configuration>
             </plugin>
         </plugins>

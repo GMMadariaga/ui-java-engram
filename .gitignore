@@ -54,6 +54,7 @@ logs/
 
 # Engram Studio specific
 .engram-studio/
+screenshot-*.png
 *.db-journal
 *.db-wal
 *.db-shm
