@@ -1,0 +1,43 @@
+/* Engram Studio - Color Palette */
+
+:root {
+    --bg:          #0A0A0A;
+    --surface:     #141414;
+    --surface-2:   #1E1E1E;
+    --border:      #2A2A2A;
+
+    --text:        #C8C8C8;
+    --text-muted:  #858585;
+    --text-dim:    #555555;
+
+    --primary:     #62A7FF;
+    --primary-dim: #3D659C;
+
+    --warning:     #CA8B39;
+
+    --success:     #5FBF7F;
+    --error:       #D06B6B;
+}
+
+/* Mapping to JavaFX CSS:
+   -fx-base:                  var(--bg)
+   -fx-background:            var(--surface)
+   -fx-control-inner-background: var(--surface-2)
+   -fx-accent:                var(--primary)
+   -fx-text-fill:             var(--text)
+
+   Sidebar:     var(--bg)
+   Content:     var(--surface)
+   Cards/Panels: var(--surface-2)
+   Borders:     var(--border)
+
+   Headings:    var(--text)
+   Body text:   var(--text-muted)
+   Dimmed:      var(--text-dim)
+
+   Links/Accents: var(--primary)
+   Hover states:  var(--primary-dim)
+   Warnings:    var(--warning)
+   Success:     var(--success)
+   Errors:      var(--error)
+*/

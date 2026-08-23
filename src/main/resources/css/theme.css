@@ -1,0 +1,394 @@
+/* Engram Studio - Engineering Console UI */
+
+/* === ROOT === */
+.root {
+    -fx-base: #0A0A0A;
+    -fx-background: #141414;
+    -fx-control-inner-background: #1E1E1E;
+    -fx-accent: #62A7FF;
+    -fx-focus-color: #62A7FF40;
+    -fx-faint-focus-color: transparent;
+    -fx-font-family: "Consolas", "Cascadia Mono", "JetBrains Mono", monospace;
+    -fx-font-size: 13px;
+    -fx-text-fill: #C8C8C8;
+}
+
+/* === TITLE BAR === */
+.title-bar {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 0 8;
+}
+
+.title-bar-icon {
+    -fx-text-fill: #62A7FF;
+    -fx-font-size: 14px;
+    -fx-padding: 0 8 0 8;
+}
+
+.title-bar-text {
+    -fx-text-fill: #858585;
+    -fx-font-size: 12px;
+}
+
+.title-bar-btn {
+    -fx-text-fill: #858585;
+    -fx-font-size: 12px;
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.title-bar-btn:hover {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #C8C8C8;
+}
+
+.title-bar-btn-close:hover {
+    -fx-background-color: #D06B6B;
+    -fx-text-fill: #0A0A0A;
+}
+
+/* === LABELS === */
+.label {
+    -fx-text-fill: #C8C8C8;
+}
+
+/* === SIDEBAR === */
+.sidebar {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 1 0 0;
+}
+
+.logo-text {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #62A7FF;
+    -fx-padding: 16 16 8 16;
+}
+
+.sidebar-label {
+    -fx-text-fill: #555555;
+    -fx-font-size: 11px;
+    -fx-padding: 2 12 2 12;
+}
+
+.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-padding: 8 16 8 20;
+    -fx-cursor: hand;
+    -fx-text-fill: #858585;
+}
+
+.sidebar-item:hover {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #C8C8C8;
+}
+
+.sidebar-item.active {
+    -fx-background-color: #62A7FF15;
+    -fx-border-color: #62A7FF;
+    -fx-border-width: 0 0 0 3;
+    -fx-text-fill: #62A7FF;
+}
+
+.sidebar-item.active .label {
+    -fx-text-fill: #62A7FF;
+}
+
+/* === CONTENT AREA === */
+.content-area {
+    -fx-background-color: #141414;
+}
+
+/* === HEADER === */
+.header {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 20 12 20;
+}
+
+.header-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #C8C8C8;
+}
+
+/* === STAT CARDS === */
+.stat-card {
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 1;
+    -fx-padding: 16;
+    -fx-background-radius: 2;
+}
+
+.stat-card:hover {
+    -fx-border-color: #3A3A3A;
+}
+
+.stat-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #62A7FF;
+}
+
+.stat-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #858585;
+    -fx-text-transform: uppercase;
+}
+
+/* === STATUS BAR === */
+.status-bar {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 4 12 4 12;
+}
+
+.status-indicator {
+    -fx-padding: 0 8 0 0;
+}
+
+.status-connected {
+    -fx-text-fill: #5FBF7F;
+}
+
+.status-disconnected {
+    -fx-text-fill: #D06B6B;
+}
+
+.status-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #858585;
+}
+
+/* === TABLES === */
+.table-view {
+    -fx-background-color: #141414;
+    -fx-border-color: #2A2A2A;
+    -fx-table-cell-border-color: #2A2A2A;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #0A0A0A;
+}
+
+.table-view .column-header {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #858585;
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: #141414;
+    -fx-border-color: #2A2A2A;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #1E1E1E;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #62A7FF20;
+}
+
+.table-view .table-row-cell:selected .label {
+    -fx-text-fill: #C8C8C8;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #C8C8C8;
+    -fx-padding: 6 8 6 8;
+}
+
+/* === SCROLL BAR === */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #3A3A3A;
+    -fx-background-radius: 2;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #4A4A4A;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
+/* === SEPARATOR === */
+.separator .line {
+    -fx-border-color: #2A2A2A;
+}
+
+/* === TAGS / BADGES === */
+.tag {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: #C8C8C8;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 2;
+    -fx-font-size: 11px;
+}
+
+.tag-type {
+    -fx-background-color: #62A7FF20;
+    -fx-text-fill: #62A7FF;
+}
+
+.tag-project {
+    -fx-background-color: #CA8B3920;
+    -fx-text-fill: #CA8B39;
+}
+
+.tag-read {
+    -fx-background-color: #5FBF7F20;
+    -fx-text-fill: #5FBF7F;
+}
+
+.tag-new {
+    -fx-background-color: #62A7FF20;
+    -fx-text-fill: #62A7FF;
+}
+
+/* === TOOLTIP === */
+.tooltip {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: #C8C8C8;
+    -fx-border-color: #3A3A3A;
+    -fx-font-size: 12px;
+}
+
+/* === BUTTONS === */
+.button {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: #C8C8C8;
+    -fx-border-color: #3A3A3A;
+    -fx-background-radius: 2;
+    -fx-padding: 6 16 6 16;
+}
+
+.button:hover {
+    -fx-background-color: #3A3A3A;
+}
+
+.button:pressed {
+    -fx-background-color: #1E1E1E;
+}
+
+.button-accent {
+    -fx-background-color: #62A7FF;
+    -fx-text-fill: #0A0A0A;
+    -fx-font-weight: bold;
+}
+
+.button-accent:hover {
+    -fx-background-color: #7BB8FF;
+}
+
+/* === SEARCH FIELD === */
+.search-field {
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #3A3A3A;
+    -fx-text-fill: #C8C8C8;
+    -fx-prompt-text-fill: #858585;
+    -fx-background-radius: 2;
+    -fx-padding: 6 12 6 12;
+}
+
+.search-field:focused {
+    -fx-border-color: #62A7FF;
+}
+
+/* === FILTER BAR === */
+.filter-bar {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+}
+
+.filter-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #858585;
+    -fx-border-color: #2A2A2A;
+    -fx-background-radius: 2;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+
+.filter-button:hover {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #C8C8C8;
+}
+
+.filter-button:selected {
+    -fx-background-color: #62A7FF20;
+    -fx-text-fill: #62A7FF;
+    -fx-border-color: #62A7FF;
+}
+
+/* === MASTER / DETAIL PANELS === */
+.master-panel {
+    -fx-background-color: #141414;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 1 0 0;
+}
+
+.detail-panel {
+    -fx-background-color: #141414;
+}
+
+.detail-header {
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* === CONTENT TEXT AREA === */
+.content-text-area {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #C8C8C8;
+    -fx-border-color: #2A2A2A;
+    -fx-font-family: "Consolas", "Cascadia Mono", "JetBrains Mono", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 12;
+    -fx-wrap-text: true;
+}
+
+.content-text-area .content {
+    -fx-background-color: #1E1E1E;
+}
+
+/* === SPLIT PANE === */
+.split-pane {
+    -fx-background-color: #141414;
+    -fx-padding: 0;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-background-color: #2A2A2A;
+    -fx-padding: 0 1 0 1;
+}
+
+.split-pane > .split-pane-divider:hover {
+    -fx-background-color: #62A7FF;
+}
