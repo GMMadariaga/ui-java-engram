@@ -154,6 +154,17 @@ public final class PtyTerminalSession implements AutoCloseable {
         return environment;
     }
 
+    /** Pid of the shell, or empty when the backend does not report one. */
+    public java.util.OptionalLong pid() {
+        PtyProcess current = process;
+        if (current == null || !current.isAlive()) return java.util.OptionalLong.empty();
+        try {
+            return java.util.OptionalLong.of(current.pid());
+        } catch (UnsupportedOperationException ex) {
+            return java.util.OptionalLong.empty();
+        }
+    }
+
     public boolean isAlive() {
         PtyProcess current = process;
         return current != null && current.isAlive();

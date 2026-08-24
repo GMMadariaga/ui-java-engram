@@ -5,11 +5,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class AppConfiguration {
     
     private static final String CONFIG_FILE = "engram-studio.properties";
+    private static final String SESSION_PREFIX = "agent.session.";
     private static final String DEFAULT_URL = "http://127.0.0.1:7437";
     private static final int DEFAULT_TIMEOUT = 5000;
     private static final boolean DEFAULT_AUTO_START = true;
@@ -101,6 +104,48 @@ public class AppConfiguration {
         }
     }
     
+    public List<AgentSessionSetting> getAgentSessions() {
+        List<AgentSessionSetting> sessions = new ArrayList<>();
+        int count;
+        try {
+            count = Integer.parseInt(properties.getProperty(SESSION_PREFIX + "count", "0"));
+        } catch (NumberFormatException e) {
+            return sessions;
+        }
+        for (int index = 0; index < count; index++) {
+            String prefix = SESSION_PREFIX + index + ".";
+            String agentId = properties.getProperty(prefix + "agent-id", "");
+            if (agentId.isBlank()) continue;
+            sessions.add(new AgentSessionSetting(
+                agentId,
+                properties.getProperty(prefix + "agent-name", ""),
+                properties.getProperty(prefix + "command", ""),
+                properties.getProperty(prefix + "label", ""),
+                properties.getProperty(prefix + "color", ""),
+                Boolean.parseBoolean(properties.getProperty(prefix + "removable", "false"))));
+        }
+        return sessions;
+    }
+
+    public void saveAgentSessions(List<AgentSessionSetting> sessions) {
+        // Reload first: other parts of the app keep their own instance and a
+        // blind store() would revert whatever they saved after this one loaded.
+        loadProperties();
+        properties.keySet().removeIf(key -> key.toString().startsWith(SESSION_PREFIX));
+        properties.setProperty(SESSION_PREFIX + "count", String.valueOf(sessions.size()));
+        for (int index = 0; index < sessions.size(); index++) {
+            AgentSessionSetting session = sessions.get(index);
+            String prefix = SESSION_PREFIX + index + ".";
+            properties.setProperty(prefix + "agent-id", session.agentId());
+            properties.setProperty(prefix + "agent-name", session.agentName());
+            properties.setProperty(prefix + "command", session.command());
+            properties.setProperty(prefix + "label", session.label());
+            properties.setProperty(prefix + "color", session.color());
+            properties.setProperty(prefix + "removable", String.valueOf(session.removable()));
+        }
+        save();
+    }
+
     public String getProperty(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
     }

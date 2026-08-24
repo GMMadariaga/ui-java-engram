@@ -145,7 +145,7 @@ public class ApplicationBootstrap {
         ConflictsView conflictsView = new ConflictsView(conflictsViewModel);
         DiagnosticsView diagnosticsView = new DiagnosticsView(diagnosticsViewModel);
         ProcessManagerView processManagerView = new ProcessManagerView(processManagerViewModel);
-        AgentCliView agentCliView = new AgentCliView();
+        AgentCliView agentCliView = new AgentCliView(config);
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("content-area");
@@ -346,6 +346,18 @@ public class ApplicationBootstrap {
         Label diagItem = createSidebarItem("\u2699 Diagnostics");
         Label processItem = createSidebarItem("\u25B6 Process");
         Label agentCliItem = createSidebarItem("\u25A4 Agents");
+        Label agentCliBadge = new Label();
+        agentCliBadge.getStyleClass().add("sidebar-badge");
+        agentCliBadge.setVisible(false);
+        agentCliBadge.setManaged(false);
+        agentCliItem.setGraphic(agentCliBadge);
+        agentCliItem.setContentDisplay(javafx.scene.control.ContentDisplay.RIGHT);
+        agentCliView.runningAgentCountProperty().addListener((obs, old, value) -> {
+            int running = value.intValue();
+            agentCliBadge.setText(String.valueOf(running));
+            agentCliBadge.setVisible(running > 0);
+            agentCliBadge.setManaged(running > 0);
+        });
         Label settingsItem = createSidebarItem("\u2692 Settings");
 
         allItems.addAll(List.of(diagItem, processItem, agentCliItem, settingsItem));

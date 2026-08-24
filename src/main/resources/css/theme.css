@@ -260,6 +260,155 @@
     -fx-text-fill: #62A7FF;
 }
 
+.agent-tab-green {
+    -fx-text-fill: #4EC9B0;
+    -fx-border-color: #4EC9B055;
+}
+
+.agent-tab-green:hover {
+    -fx-background-color: #4EC9B01A;
+    -fx-text-fill: #4EC9B0;
+}
+
+.agent-tab-green:selected {
+    -fx-background-color: #4EC9B026;
+    -fx-border-color: #4EC9B0;
+    -fx-text-fill: #4EC9B0;
+}
+
+.agent-tab-yellow {
+    -fx-text-fill: #DCDCAA;
+    -fx-border-color: #DCDCAA55;
+}
+
+.agent-tab-yellow:hover {
+    -fx-background-color: #DCDCAA1A;
+    -fx-text-fill: #DCDCAA;
+}
+
+.agent-tab-yellow:selected {
+    -fx-background-color: #DCDCAA26;
+    -fx-border-color: #DCDCAA;
+    -fx-text-fill: #DCDCAA;
+}
+
+.agent-tab-orange {
+    -fx-text-fill: #E8A33D;
+    -fx-border-color: #E8A33D55;
+}
+
+.agent-tab-orange:hover {
+    -fx-background-color: #E8A33D1A;
+    -fx-text-fill: #E8A33D;
+}
+
+.agent-tab-orange:selected {
+    -fx-background-color: #E8A33D26;
+    -fx-border-color: #E8A33D;
+    -fx-text-fill: #E8A33D;
+}
+
+.agent-tab-red {
+    -fx-text-fill: #F14C4C;
+    -fx-border-color: #F14C4C55;
+}
+
+.agent-tab-red:hover {
+    -fx-background-color: #F14C4C1A;
+    -fx-text-fill: #F14C4C;
+}
+
+.agent-tab-red:selected {
+    -fx-background-color: #F14C4C26;
+    -fx-border-color: #F14C4C;
+    -fx-text-fill: #F14C4C;
+}
+
+.agent-tab-purple {
+    -fx-text-fill: #C586C0;
+    -fx-border-color: #C586C055;
+}
+
+.agent-tab-purple:hover {
+    -fx-background-color: #C586C01A;
+    -fx-text-fill: #C586C0;
+}
+
+.agent-tab-purple:selected {
+    -fx-background-color: #C586C026;
+    -fx-border-color: #C586C0;
+    -fx-text-fill: #C586C0;
+}
+
+.agent-tab-pink {
+    -fx-text-fill: #FF7AB6;
+    -fx-border-color: #FF7AB655;
+}
+
+.agent-tab-pink:hover {
+    -fx-background-color: #FF7AB61A;
+    -fx-text-fill: #FF7AB6;
+}
+
+.agent-tab-pink:selected {
+    -fx-background-color: #FF7AB626;
+    -fx-border-color: #FF7AB6;
+    -fx-text-fill: #FF7AB6;
+}
+
+.agent-tab-menu {
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #2A2A2A;
+    -fx-padding: 4 0 4 0;
+}
+
+.agent-tab-menu .menu-item {
+    -fx-padding: 5 12 5 12;
+}
+
+.agent-tab-menu .menu-item .label {
+    -fx-text-fill: #C8C8C8;
+    -fx-font-size: 12px;
+}
+
+.agent-tab-menu .menu-item:focused {
+    -fx-background-color: #2A2A2A;
+}
+
+.agent-tab-menu .separator .line {
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 1 0 0 0;
+}
+
+.agent-color-row {
+    -fx-padding: 3 4 3 4;
+}
+
+.agent-color-swatch {
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-max-width: 16;
+    -fx-max-height: 16;
+    -fx-padding: 0;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.agent-color-swatch:hover {
+    -fx-border-color: #FFFFFF80;
+}
+
+.agent-color-none {
+    -fx-background-color: transparent;
+    -fx-border-color: #858585;
+}
+
+.agent-color-none:hover {
+    -fx-border-color: #C8C8C8;
+}
+
 /* === SETTINGS === */
 .settings-scroll {
     -fx-background-color: #141414;
@@ -574,4 +723,14 @@
 
 .split-pane > .split-pane-divider:hover {
     -fx-background-color: #62A7FF;
+}
+
+.sidebar-badge {
+    -fx-background-color: #62A7FF26;
+    -fx-border-color: #62A7FF;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+    -fx-text-fill: #62A7FF;
+    -fx-font-size: 10px;
+    -fx-padding: 0 6 0 6;
 }

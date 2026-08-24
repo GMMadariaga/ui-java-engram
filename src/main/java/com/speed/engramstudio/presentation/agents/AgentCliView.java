@@ -1,19 +1,30 @@
 package com.speed.engramstudio.presentation.agents;
 
 import com.sun.javafx.webkit.WebConsoleListener;
+import com.speed.engramstudio.infrastructure.config.AgentSessionSetting;
 import com.speed.engramstudio.infrastructure.config.AppConfiguration;
 import com.speed.engramstudio.infrastructure.process.AgentExecutableResolver;
 import com.speed.engramstudio.infrastructure.process.EngramExecutableResolver;
+import com.speed.engramstudio.infrastructure.process.ProcessTreeInspector;
 import com.speed.engramstudio.infrastructure.process.PtyTerminalSession;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.Clipboard;
@@ -42,6 +53,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Full-size xterm.js terminal for PowerShell and common agent CLIs. */
 public final class AgentCliView {
@@ -55,14 +67,29 @@ public final class AgentCliView {
         new AgentCommand("agy", "Antigravity", List.of("agy"), false, false)
     ));
 
+    private static final Set<String> MODEL_AGENT_IDS = Set.of("claude", "codex", "opencode", "agy");
+    private static final Duration AGENT_ACTIVITY_INTERVAL = Duration.seconds(3);
+
+    private static final List<TabColor> TAB_COLORS = List.of(
+        new TabColor("green", "Verde", "#4EC9B0"),
+        new TabColor("yellow", "Amarillo", "#DCDCAA"),
+        new TabColor("orange", "Naranja", "#E8A33D"),
+        new TabColor("red", "Rojo", "#F14C4C"),
+        new TabColor("purple", "Morado", "#C586C0"),
+        new TabColor("pink", "Rosa", "#FF7AB6"));
+
     private final VBox root = new VBox();
     private final StackPane terminalPane = new StackPane();
     private final List<AgentSession> sessions = new ArrayList<>();
     private final ToggleGroup agentGroup = new ToggleGroup();
     private final HBox tabs = new HBox(6);
+    private final ReadOnlyIntegerWrapper runningAgentCount = new ReadOnlyIntegerWrapper(0);
+    private final Timeline agentActivityWatch = new Timeline();
     private final AppConfiguration configuration;
     private Button addAgentButton;
     private AgentSession activeSession;
+    private int customAgentSequence;
+    private boolean agentActivityScanRunning;
 
     public AgentCliView() {
         this(new AppConfiguration());
@@ -97,11 +124,61 @@ public final class AgentCliView {
             System.err.println("JS Console [" + sourceId + ":" + lineNumber + "]: " + message));
         terminalPane.getStyleClass().add("terminal-pane");
 
-        for (AgentCommand agent : agents) addAgentSession(agent, false);
+        restoreSessions();
 
         root.getChildren().addAll(tabsScroll, terminalPane);
         VBox.setVgrow(terminalPane, Priority.ALWAYS);
         activateSession(sessions.getFirst());
+        startAgentActivityWatch();
+    }
+
+    /** Number of tabs whose agent CLI is running right now. */
+    public ReadOnlyIntegerProperty runningAgentCountProperty() {
+        return runningAgentCount.getReadOnlyProperty();
+    }
+
+    private void startAgentActivityWatch() {
+        agentActivityWatch.getKeyFrames().add(
+            new KeyFrame(AGENT_ACTIVITY_INTERVAL, event -> refreshRunningAgentCount()));
+        agentActivityWatch.setCycleCount(Animation.INDEFINITE);
+        agentActivityWatch.play();
+    }
+
+    /**
+     * The pty child is always the shell, so a live terminal says nothing about
+     * the agent. What counts is whether the CLI still runs below that shell.
+     */
+    private void refreshRunningAgentCount() {
+        if (agentActivityScanRunning) return;
+
+        List<AgentActivityProbe> probes = new ArrayList<>();
+        for (AgentSession session : sessions) {
+            if (!MODEL_AGENT_IDS.contains(session.agent.id) || session.agent.command.isEmpty()) continue;
+            session.terminal.pid().ifPresent(pid ->
+                probes.add(new AgentActivityProbe(pid, session.agent.command.getFirst())));
+        }
+        if (probes.isEmpty()) {
+            runningAgentCount.set(0);
+            return;
+        }
+
+        agentActivityScanRunning = true;
+        Thread.ofVirtual().start(() -> {
+            int running = 0;
+            try {
+                ProcessTreeInspector.Snapshot snapshot = ProcessTreeInspector.snapshot();
+                for (AgentActivityProbe probe : probes) {
+                    if (snapshot.hasDescendantMatching(probe.shellPid(), probe.marker())) running++;
+                }
+            } catch (RuntimeException ex) {
+                System.err.println("Agent activity scan error: " + ex.getMessage());
+            }
+            int total = running;
+            Platform.runLater(() -> {
+                runningAgentCount.set(total);
+                agentActivityScanRunning = false;
+            });
+        });
     }
 
     private void configureWebEngineUserDataDirectory(WebEngine engine) {
@@ -151,6 +228,14 @@ public final class AgentCliView {
                 html, body, #terminal { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
                 body { background:#050505; }
                 .xterm { height:100%; padding:14px; box-sizing:border-box; }
+                /* WebView paints no visible scrollbar for the xterm viewport unless it is styled. */
+                .xterm .xterm-viewport::-webkit-scrollbar { width:14px; }
+                .xterm .xterm-viewport::-webkit-scrollbar-track { background:#141414; }
+                .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+                  background:#7A7A7A; border:3px solid #141414;
+                  border-radius:7px; background-clip:padding-box;
+                }
+                .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background:#62A7FF; }
               </style>
             </head><body>
               <div id="terminal"></div>
@@ -260,6 +345,63 @@ public final class AgentCliView {
         return session;
     }
 
+    private void restoreSessions() {
+        for (AgentSessionSetting setting : configuration.getAgentSessions()) {
+            AgentCommand agent = resolveAgent(setting);
+            if (agent == null) continue;
+            AgentSession session = addAgentSession(agent, setting.removable());
+            if (!setting.label().isBlank()) {
+                session.label = setting.label();
+                session.tab.setText(setting.label());
+            }
+            session.colorId = setting.color();
+            applyTabColor(session);
+        }
+        for (AgentCommand agent : List.copyOf(agents)) {
+            boolean alreadyOpen = sessions.stream()
+                .anyMatch(session -> !session.removable && session.agent.id.equals(agent.id));
+            if (!alreadyOpen) addAgentSession(agent, false);
+        }
+    }
+
+    private AgentCommand resolveAgent(AgentSessionSetting setting) {
+        for (AgentCommand agent : agents) {
+            if (agent.id.equals(setting.agentId())) return agent;
+        }
+        if (setting.command().isBlank()) return null;
+        try {
+            AgentCommand agent = new AgentCommand(setting.agentId(), setting.agentName(),
+                parseCommandLine(setting.command()), false, true);
+            agents.add(agent);
+            rememberCustomAgentId(setting.agentId());
+            return agent;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private void rememberCustomAgentId(String agentId) {
+        if (!agentId.startsWith("custom-")) return;
+        try {
+            customAgentSequence = Math.max(customAgentSequence,
+                Integer.parseInt(agentId.substring("custom-".length())));
+        } catch (NumberFormatException ignored) {
+            // A hand-edited id simply stays out of the generated sequence.
+        }
+    }
+
+    private void persistSessions() {
+        configuration.saveAgentSessions(sessions.stream()
+            .map(session -> new AgentSessionSetting(
+                session.agent.id,
+                session.agent.name,
+                session.agent.rawPowerShellCommand ? String.join(" ", session.agent.command) : "",
+                session.label,
+                session.colorId,
+                session.removable))
+            .toList());
+    }
+
     private String sessionLabel(AgentCommand agent) {
         long sameAgentCount = sessions.stream()
             .filter(session -> session.agent.id.equals(agent.id))
@@ -270,6 +412,7 @@ public final class AgentCliView {
     private void addAgentTab(AgentSession session) {
         ToggleButton tab = new ToggleButton(session.label);
         tab.setToggleGroup(agentGroup);
+        tab.setMnemonicParsing(false);
         tab.setFocusTraversable(false);
         tab.getStyleClass().add("agent-tab");
         tab.setOnAction(event -> activateSession(session));
@@ -287,9 +430,79 @@ public final class AgentCliView {
             closeButton.setOnAction(event -> removeSession(session));
             tabContainer.getChildren().add(closeButton);
         }
+        tab.setContextMenu(buildTabMenu(session));
+        applyTabColor(session);
         session.tabContainer = tabContainer;
         int insertAt = tabs.getChildren().indexOf(addAgentButton);
         tabs.getChildren().add(insertAt, tabContainer);
+    }
+
+    private ContextMenu buildTabMenu(AgentSession session) {
+        ContextMenu menu = new ContextMenu();
+        menu.getStyleClass().add("agent-tab-menu");
+
+        MenuItem renameItem = new MenuItem("Renombrar...");
+        renameItem.setOnAction(event -> renameSession(session));
+
+        CustomMenuItem colorItem = new CustomMenuItem(buildColorRow(session, menu), false);
+        menu.getItems().addAll(renameItem, colorItem);
+
+        if (session.removable) {
+            MenuItem closeItem = new MenuItem("Cerrar sesión");
+            closeItem.setOnAction(event -> removeSession(session));
+            menu.getItems().addAll(new SeparatorMenuItem(), closeItem);
+        }
+        return menu;
+    }
+
+    private Node buildColorRow(AgentSession session, ContextMenu menu) {
+        HBox row = new HBox(6);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("agent-color-row");
+        row.getChildren().add(colorSwatch(session, menu, null));
+        for (TabColor color : TAB_COLORS) row.getChildren().add(colorSwatch(session, menu, color));
+        return row;
+    }
+
+    private Button colorSwatch(AgentSession session, ContextMenu menu, TabColor color) {
+        Button swatch = new Button();
+        swatch.setFocusTraversable(false);
+        swatch.getStyleClass().add("agent-color-swatch");
+        if (color == null) {
+            swatch.getStyleClass().add("agent-color-none");
+            swatch.setTooltip(new Tooltip("Sin color"));
+        } else {
+            swatch.setStyle("-fx-background-color: " + color.hex() + ";");
+            swatch.setTooltip(new Tooltip(color.name()));
+        }
+        swatch.setOnAction(event -> {
+            session.colorId = color == null ? "" : color.id();
+            applyTabColor(session);
+            persistSessions();
+            menu.hide();
+        });
+        return swatch;
+    }
+
+    private void applyTabColor(AgentSession session) {
+        if (session.tab == null) return;
+        for (TabColor color : TAB_COLORS) session.tab.getStyleClass().remove(color.styleClass());
+        TAB_COLORS.stream()
+            .filter(color -> color.id().equals(session.colorId))
+            .findFirst()
+            .ifPresent(color -> session.tab.getStyleClass().add(color.styleClass()));
+    }
+
+    private void renameSession(AgentSession session) {
+        TextInputDialog dialog = new TextInputDialog(session.label);
+        dialog.setTitle("Renombrar sesión");
+        dialog.setHeaderText("Nombre de la pestaña");
+        dialog.setContentText("Nombre:");
+        dialog.showAndWait().map(String::trim).filter(value -> !value.isEmpty()).ifPresent(value -> {
+            session.label = value;
+            session.tab.setText(value);
+            persistSessions();
+        });
     }
 
     private void promptForAgent() {
@@ -303,8 +516,12 @@ public final class AgentCliView {
         dialog.setHeaderText("Elige qué CLI quieres ejecutar");
         dialog.setContentText("CLI:");
         dialog.showAndWait().ifPresent(choice -> {
-            if (choice.agent == null) promptForCustomAgent();
-            else activateSession(addAgentSession(choice.agent, true));
+            if (choice.agent == null) {
+                promptForCustomAgent();
+            } else {
+                activateSession(addAgentSession(choice.agent, true));
+                persistSessions();
+            }
         });
     }
 
@@ -318,9 +535,10 @@ public final class AgentCliView {
             try {
                 List<String> command = parseCommandLine(value);
                 AgentCommand agent = new AgentCommand(
-                    "custom-" + agents.size(), command.getFirst(), command, false, true);
+                    "custom-" + (++customAgentSequence), command.getFirst(), command, false, true);
                 agents.add(agent);
                 activateSession(addAgentSession(agent, true));
+                persistSessions();
             } catch (IllegalArgumentException ex) {
                 // Keep the terminal itself free of auxiliary dialogs/messages.
             }
@@ -346,6 +564,7 @@ public final class AgentCliView {
             AgentSession replacement = sessions.get(Math.min(tabIndex, sessions.size() - 1));
             activateSession(replacement);
         }
+        persistSessions();
     }
 
     private List<String> parseCommandLine(String value) {
@@ -452,13 +671,15 @@ public final class AgentCliView {
     }
 
     public void close() {
+        agentActivityWatch.stop();
         sessions.forEach(AgentSession::close);
     }
 
     private final class AgentSession {
         private final AgentCommand agent;
-        private final String label;
         private final boolean removable;
+        private String label;
+        private String colorId = "";
         private final PtyTerminalSession terminal = new PtyTerminalSession();
         private final WebView webView = new WebView();
         private final WebEngine webEngine = webView.getEngine();
@@ -675,6 +896,15 @@ public final class AgentCliView {
                     focusSession(session);
                 }
             });
+        }
+    }
+
+    private record AgentActivityProbe(long shellPid, String marker) {
+    }
+
+    private record TabColor(String id, String name, String hex) {
+        private String styleClass() {
+            return "agent-tab-" + id;
         }
     }
 
