@@ -184,6 +184,40 @@ class PtyTerminalSessionTest {
     }
 
     @Test
+    void executesCodexShimWhenParentPathMissesNodeJs() throws Exception {
+        if (!System.getProperty("os.name").toLowerCase().contains("win")) return;
+
+        String executable = AgentExecutableResolver.resolve("codex", "").orElse(null);
+        String programFiles = System.getenv("ProgramFiles");
+        if (executable == null || programFiles == null || programFiles.isBlank()) return;
+        Path node = Path.of(programFiles, "nodejs", "node.exe");
+        if (!Files.isRegularFile(node)) return;
+
+        Map<String, String> environment = new HashMap<>(System.getenv());
+        environment.put("PATH", "C:\\Windows\\System32");
+        AgentExecutableResolver.addUserLocalPaths(environment);
+
+        String command = AgentExecutableResolver.buildShellCommand(executable, List.of("--version"));
+        ByteArrayOutputStream rawOutput = new ByteArrayOutputStream();
+        CountDownLatch finished = new CountDownLatch(1);
+        try (PtyTerminalSession session = new PtyTerminalSession()) {
+            session.startRaw(AgentExecutableResolver.embeddedPowerShellCommand(), "", environment,
+                bytes -> {
+                    synchronized (rawOutput) {
+                        rawOutput.writeBytes(bytes);
+                    }
+                }, code -> finished.countDown());
+
+            Thread.sleep(900);
+            session.write(command + "; exit\r");
+            assertThat(finished.await(15, TimeUnit.SECONDS)).isTrue();
+        }
+
+        assertThat(new String(rawOutput.toByteArray(), java.nio.charset.StandardCharsets.UTF_8))
+            .contains("codex-cli");
+    }
+
+    @Test
     void addsAntigravityDirectoryToEmbeddedPowerShellPath() {
         if (!System.getProperty("os.name").toLowerCase().contains("win")) return;
 
@@ -195,6 +229,43 @@ class PtyTerminalSessionTest {
         environment.put("PATH", "C:\\Windows\\System32");
         AgentExecutableResolver.addUserLocalPaths(environment);
         assertThat(environment.get("PATH")).contains(agy.getParent().toString());
+    }
+
+    @Test
+    void addsNodeJsDirectoryToEmbeddedPowerShellPath() {
+        if (!System.getProperty("os.name").toLowerCase().contains("win")) return;
+
+        String programFiles = System.getenv("ProgramFiles");
+        if (programFiles == null || programFiles.isBlank()) return;
+
+        Path node = Path.of(programFiles, "nodejs", "node.exe");
+        if (!Files.isRegularFile(node)) return;
+
+        Map<String, String> environment = new HashMap<>();
+        environment.put("PATH", "C:\\Windows\\System32");
+        AgentExecutableResolver.addUserLocalPaths(environment);
+
+        assertThat(environment.get("PATH")).contains(node.getParent().toString());
+    }
+
+    @Test
+    void addsWindowsSystemDirectoriesToEmbeddedPowerShellPath() {
+        if (!System.getProperty("os.name").toLowerCase().contains("win")) return;
+
+        String systemRoot = System.getenv("SystemRoot");
+        if (systemRoot == null || systemRoot.isBlank()) {
+            systemRoot = System.getenv("WINDIR");
+        }
+        if (systemRoot == null || systemRoot.isBlank()) return;
+
+        Path chcp = Path.of(systemRoot, "System32", "chcp.com");
+        if (!Files.isRegularFile(chcp)) return;
+
+        Map<String, String> environment = new HashMap<>();
+        environment.put("PATH", "");
+        AgentExecutableResolver.addUserLocalPaths(environment);
+
+        assertThat(environment.get("PATH")).contains(chcp.getParent().toString());
     }
 
 }

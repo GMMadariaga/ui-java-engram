@@ -76,11 +76,29 @@ public final class AgentExecutableResolver {
         String userHome = System.getProperty("user.home", "");
         if (userHome.isBlank()) return;
 
-        List<Path> directories = List.of(
+        List<Path> directories = new ArrayList<>(List.of(
             Path.of(userHome, ".local", "bin"),
             Path.of(userHome, "AppData", "Local", "pnpm"),
             Path.of(userHome, "AppData", "Local", "pnpm", "bin"),
-            Path.of(userHome, "AppData", "Local", "agy", "bin"));
+            Path.of(userHome, "AppData", "Local", "agy", "bin"),
+            Path.of(userHome, "AppData", "Roaming", "npm")));
+
+        // A desktop/IDE-launched Engram Studio can inherit a PATH captured
+        // before Node.js was installed. Codex and other pnpm shims are
+        // scripts that invoke `node`, so adding only the shim directory is
+        // not enough; the Node runtime directory must also be visible to the
+        // embedded PowerShell process.
+        String systemRoot = System.getenv("SystemRoot");
+        if (systemRoot == null || systemRoot.isBlank()) {
+            systemRoot = System.getenv("WINDIR");
+        }
+        addIfPresent(directories, systemRoot, "System32");
+        addIfPresent(directories, systemRoot, "System32", "Wbem");
+        addIfPresent(directories, systemRoot, "System32", "WindowsPowerShell", "v1.0");
+        addIfPresent(directories, System.getenv("ProgramFiles"), "nodejs");
+        addIfPresent(directories, System.getenv("ProgramFiles(x86)"), "nodejs");
+        addIfPresent(directories, System.getenv("LOCALAPPDATA"), "Programs", "nodejs");
+
         String currentPath = environment.getOrDefault("PATH", "");
         LinkedHashSet<String> paths = new LinkedHashSet<>();
         for (Path directory : directories) {
@@ -92,6 +110,13 @@ public final class AgentExecutableResolver {
             }
         }
         environment.put("PATH", String.join(File.pathSeparator, paths));
+    }
+
+    private static void addIfPresent(List<Path> directories, String root, String... children) {
+        if (root == null || root.isBlank()) return;
+        Path directory = Path.of(root);
+        for (String child : children) directory = directory.resolve(child);
+        directories.add(directory);
     }
 
     private static Optional<String> findInUserLocalBin(String commandName) {

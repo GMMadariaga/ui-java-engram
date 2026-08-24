@@ -43,6 +43,43 @@ Or run directly with Maven:
 mvn javafx:run
 ```
 
+## Windows installer
+
+The project includes a `jpackage` script that bundles the application with its
+runtime and Maven runtime dependencies. Generated packages are written to
+`dist/`, which is intentionally ignored by Git.
+
+Generate and verify a portable application image:
+
+```powershell
+.\scripts\package-windows.ps1 -Type app-image -Version 1.0.1
+```
+
+Generate an installable EXE after installing WiX Toolset and making
+`candle.exe` and `light.exe` available on `PATH`:
+
+```powershell
+.\scripts\package-windows.ps1 -Type exe -Version 1.0.1
+```
+
+Use `-Type msi` for an MSI package. The EXE/MSI uses a stable upgrade UUID so
+future versions update the existing installation instead of creating a second
+one. The installer creates an **Engram Studio** shortcut on the Windows desktop
+and an entry in the Start menu.
+
+### Existing configuration is preserved
+
+The installer does **not** package or replace user configuration. Engram Studio
+continues to read and write:
+
+```text
+%USERPROFILE%\.engram-studio\engram-studio.properties
+```
+
+This preserves the Engram URL, timeout, auto-connect/auto-start settings, and
+configured agent executable paths across installation and upgrades. The
+installer only replaces the application files under its installation folder.
+
 Agent executable paths can be configured from **Settings → Agent executables**.
 The values are stored in:
 
