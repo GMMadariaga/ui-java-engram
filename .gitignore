@@ -58,3 +58,6 @@ screenshot-*.png
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Build artifacts (binaries)
+*.exe

@@ -348,15 +348,13 @@ public class ApplicationBootstrap {
         Label agentCliItem = createSidebarItem("\u25A4 Agents");
         Label agentCliBadge = new Label();
         agentCliBadge.getStyleClass().add("sidebar-badge");
-        agentCliBadge.setVisible(false);
-        agentCliBadge.setManaged(false);
-        agentCliItem.setGraphic(agentCliBadge);
         agentCliItem.setContentDisplay(javafx.scene.control.ContentDisplay.RIGHT);
         agentCliView.runningAgentCountProperty().addListener((obs, old, value) -> {
             int running = value.intValue();
             agentCliBadge.setText(String.valueOf(running));
-            agentCliBadge.setVisible(running > 0);
-            agentCliBadge.setManaged(running > 0);
+            // The graphic itself is swapped: a Label skin drops an unmanaged
+            // graphic on build and never adds it back when it turns managed.
+            agentCliItem.setGraphic(running > 0 ? agentCliBadge : null);
         });
         Label settingsItem = createSidebarItem("\u2692 Settings");
 

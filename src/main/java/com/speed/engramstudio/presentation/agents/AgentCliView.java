@@ -166,9 +166,8 @@ public final class AgentCliView {
         Thread.ofVirtual().start(() -> {
             int running = 0;
             try {
-                ProcessTreeInspector.Snapshot snapshot = ProcessTreeInspector.snapshot();
                 for (AgentActivityProbe probe : probes) {
-                    if (snapshot.hasDescendantMatching(probe.shellPid(), probe.marker())) running++;
+                    if (ProcessTreeInspector.hasDescendantMatching(probe.shellPid(), probe.marker())) running++;
                 }
             } catch (RuntimeException ex) {
                 System.err.println("Agent activity scan error: " + ex.getMessage());
